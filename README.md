@@ -19,7 +19,7 @@
 
 ```bash
 # 1. Clone & enter the project
-git clone git@github.com:RishiiShah/DBDS_Project.git && cd Finalproject
+git clone git@github.com:RishiiShah/DBDS_Project.git && cd DBDS_Project
 
 # 2. Create & activate virtual environment
 python3 -m venv venv
