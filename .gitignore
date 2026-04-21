@@ -1,0 +1,41 @@
+# Virtual environment
+venv/
+.venv/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Flask
+instance/
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# MySQL data (Docker volume)
+mysql_data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+docs/
