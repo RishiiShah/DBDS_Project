@@ -37,5 +37,8 @@ mysql_data/
 .DS_Store
 Thumbs.db
 
+# Local SQLite artifacts
+*.db
+
 # Documentation
 docs/
