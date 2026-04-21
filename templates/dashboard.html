@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<section class="dashboard-section">
+    <div class="section-container">
+        <div class="dashboard-header">
+            <h1>Welcome back, <span class="gradient-text">{{ current_user.first_name }}</span></h1>
+            <p class="dashboard-subtitle">Here's your BuyMe dashboard. Your teammates will build out the auction features below.</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Quick Stats -->
+            <div class="dash-card">
+                <div class="dash-card-icon">👤</div>
+                <div class="dash-card-content">
+                    <h3>My Profile</h3>
+                    <p>{{ current_user.full_name }}</p>
+                    <span class="dash-meta">{{ current_user.email }}</span>
+                    <span class="role-badge role-{{ current_user.role }}">{{ current_user.role | capitalize }}</span>
+                </div>
+            </div>
+
+            <div class="dash-card">
+                <div class="dash-card-icon">🏷️</div>
+                <div class="dash-card-content">
+                    <h3>My Auctions</h3>
+                    <p class="dash-stat-value">—</p>
+                    <span class="dash-meta">Active listings</span>
+                </div>
+            </div>
+
+            <div class="dash-card">
+                <div class="dash-card-icon">💰</div>
+                <div class="dash-card-content">
+                    <h3>My Bids</h3>
+                    <p class="dash-stat-value">—</p>
+                    <span class="dash-meta">Active bids</span>
+                </div>
+            </div>
+
+            <div class="dash-card">
+                <div class="dash-card-icon">🔔</div>
+                <div class="dash-card-content">
+                    <h3>Alerts</h3>
+                    <p class="dash-stat-value">—</p>
+                    <span class="dash-meta">Unread notifications</span>
+                </div>
+            </div>
+        </div>
+
+        {% if current_user.is_admin %}
+        <div class="admin-panel">
+            <h2>Admin Panel</h2>
+            <p class="dash-meta">Admin routes will be built by your teammates.</p>
+            <div class="admin-actions">
+                <span class="btn btn-outline btn-sm">Manage Reps</span>
+                <span class="btn btn-outline btn-sm">Sales Reports</span>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if current_user.is_rep %}
+        <div class="admin-panel">
+            <h2>Customer Rep Panel</h2>
+            <p class="dash-meta">Rep routes will be built by your teammates.</p>
+            <div class="admin-actions">
+                <span class="btn btn-outline btn-sm">Open Questions</span>
+                <span class="btn btn-outline btn-sm">Manage Users</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

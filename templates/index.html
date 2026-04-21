@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-bg-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+    <div class="hero-container">
+        <div class="hero-badge">⚡ Electronics Auctions</div>
+        <h1 class="hero-title">
+            Discover, Bid &amp;
+            <span class="gradient-text">Win</span>
+            Premium Electronics
+        </h1>
+        <p class="hero-subtitle">
+            The smartest way to buy and sell laptops, phones, audio gear, and gaming equipment.
+            Set your price, let automatic bidding do the work.
+        </p>
+        <div class="hero-actions">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">
+                    Go to Dashboard
+                    <span class="btn-arrow">→</span>
+                </a>
+            {% else %}
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
+                    Get Started Free
+                    <span class="btn-arrow">→</span>
+                </a>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-lg">
+                    Sign In
+                </a>
+            {% endif %}
+        </div>
+        <div class="hero-stats">
+            <div class="stat">
+                <span class="stat-value">10+</span>
+                <span class="stat-label">Categories</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value">Auto</span>
+                <span class="stat-label">Bidding</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value">24/7</span>
+                <span class="stat-label">Support</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="features-section">
+    <div class="section-container">
+        <h2 class="section-title">How BuyMe Works</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📋</div>
+                <h3>List Your Item</h3>
+                <p>Create an auction with detailed specs, set your price, and let buyers find you.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3>Browse &amp; Search</h3>
+                <p>Filter by category, price range, condition, and category-specific attributes.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>Auto-Bid</h3>
+                <p>Set your max price and let BuyMe bid automatically — never miss a deal.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔔</div>
+                <h3>Smart Alerts</h3>
+                <p>Get notified when items you want become available or when you're outbid.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="categories-section">
+    <div class="section-container">
+        <h2 class="section-title">Browse Categories</h2>
+        <div class="categories-grid">
+            <div class="category-card">
+                <div class="category-icon">💻</div>
+                <h3>Computers</h3>
+                <p>Laptops · Desktops · Components</p>
+            </div>
+            <div class="category-card">
+                <div class="category-icon">📱</div>
+                <h3>Phones</h3>
+                <p>Smartphones · Feature Phones</p>
+            </div>
+            <div class="category-card">
+                <div class="category-icon">🎧</div>
+                <h3>Audio</h3>
+                <p>Headphones · Speakers · Turntables</p>
+            </div>
+            <div class="category-card">
+                <div class="category-icon">🎮</div>
+                <h3>Gaming</h3>
+                <p>Consoles · Accessories</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
