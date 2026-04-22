@@ -35,6 +35,9 @@ def create_app():
     from routes.main import main_bp
     app.register_blueprint(main_bp)
 
+    from routes.auction import auction_bp
+    app.register_blueprint(auction_bp)
+
     # ── Create tables ───────────────────────────────────────────
     with app.app_context():
         db.create_all()

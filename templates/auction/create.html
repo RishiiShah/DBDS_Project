@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Auction{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+  <div class="auth-container" style="max-width: 760px;">
+    <div class="auth-card auth-card-wide">
+      <div class="auth-header">
+        <h1>Create Auction</h1>
+        <p>List your item with category attributes, pricing, and end time.</p>
+      </div>
+
+      <form method="post" class="auth-form" id="auction-create-form">
+        <div class="form-group">
+          <label class="form-label" for="name">Item name</label>
+          <input class="form-input" id="name" name="name" required value="{{ request.form.get('name', '') }}">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="description">Description</label>
+          <textarea class="form-input" id="description" name="description" rows="4">{{ request.form.get('description', '') }}</textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="category_id">Category</label>
+            <select class="form-input" id="category_id" name="category_id" required>
+              <option value="">Choose a category</option>
+              {% for category in categories %}
+                <option value="{{ category.id }}"
+                        data-required-fields='{{ (category.required_fields or [])|tojson }}'
+                        {% if selected_category == category.id %}selected{% endif %}>
+                  {{ category.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="condition">Condition</label>
+            <select class="form-input" id="condition" name="condition" required>
+              {% set chosen = request.form.get('condition', 'good') %}
+              {% for value, label in [('new', 'New'), ('like_new', 'Like New'), ('good', 'Good'), ('fair', 'Fair'), ('poor', 'Poor')] %}
+                <option value="{{ value }}" {% if chosen == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div id="dynamic-attributes" class="auth-form"></div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="starting_price">Starting price ($)</label>
+            <input class="form-input" type="number" min="0.01" step="0.01" id="starting_price" name="starting_price" required
+                   value="{{ request.form.get('starting_price', '') }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reserve_price">Reserve price ($)</label>
+            <input class="form-input" type="number" min="0.01" step="0.01" id="reserve_price" name="reserve_price" required
+                   value="{{ request.form.get('reserve_price', '') }}">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="bid_increment">Bid increment ($)</label>
+            <input class="form-input" type="number" min="0.01" step="0.01" id="bid_increment" name="bid_increment" required
+                   value="{{ request.form.get('bid_increment', '') }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="end_time">Auction end time (UTC)</label>
+            <input class="form-input" type="datetime-local" id="end_time" name="end_time" required
+                   value="{{ request.form.get('end_time', '') }}">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">Create Auction</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (() => {
+    const categorySelect = document.getElementById('category_id');
+    const dynamicAttributes = document.getElementById('dynamic-attributes');
+    const existingValues = {{ request.form.to_dict()|tojson }};
+
+    function titleize(value) {
+      return value.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function renderRequiredFields() {
+      dynamicAttributes.innerHTML = '';
+      const selected = categorySelect.options[categorySelect.selectedIndex];
+      if (!selected) return;
+
+      const fields = JSON.parse(selected.getAttribute('data-required-fields') || '[]');
+      fields.forEach(field => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'form-group';
+
+        const label = document.createElement('label');
+        label.className = 'form-label';
+        label.setAttribute('for', `attr_${field}`);
+        label.textContent = titleize(field);
+
+        const input = document.createElement('input');
+        input.className = 'form-input';
+        input.id = `attr_${field}`;
+        input.name = `attr_${field}`;
+        input.required = true;
+        input.value = existingValues[`attr_${field}`] || '';
+
+        wrapper.appendChild(label);
+        wrapper.appendChild(input);
+        dynamicAttributes.appendChild(wrapper);
+      });
+    }
+
+    categorySelect.addEventListener('change', renderRequiredFields);
+    renderRequiredFields();
+  })();
+</script>
+{% endblock %}

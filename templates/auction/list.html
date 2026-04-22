@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Auctions{% endblock %}
+
+{% block content %}
+<section class="dashboard-section">
+  <div class="section-container">
+    <div class="dashboard-header">
+      <h1>Active Auctions</h1>
+      <p class="dashboard-subtitle">Browse live listings and place bids in real time.</p>
+    </div>
+
+    <form method="get" class="auth-form" style="max-width: 360px; margin-bottom: 26px;">
+      <div class="form-group">
+        <label class="form-label" for="category">Filter by category</label>
+        <select id="category" name="category" class="form-input" onchange="this.form.submit()">
+          <option value="">All categories</option>
+          {% for category in categories %}
+            <option value="{{ category.id }}" {% if selected_category == category.id %}selected{% endif %}>
+              {{ category.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+
+    <div class="dashboard-grid">
+      {% for auction in auctions %}
+        <article class="dash-card">
+          <div class="dash-card-content" style="width: 100%;">
+            <h3>{{ auction.item.name }}</h3>
+            <p class="dash-meta">{{ auction.item.category.name }} · {{ auction.bid_count }} bids</p>
+            <p class="dash-stat-value">${{ '%.2f'|format(auction.current_price|float) }}</p>
+            <p class="dash-meta">Ends: {{ auction.end_time.strftime('%Y-%m-%d %H:%M UTC') }}</p>
+            <a class="btn btn-primary btn-sm" href="{{ url_for('auction.auction_detail', id=auction.id) }}" style="margin-top: 12px;">
+              View Auction
+            </a>
+          </div>
+        </article>
+      {% else %}
+        <article class="dash-card">
+          <div class="dash-card-content">
+            <h3>No active auctions</h3>
+            <p class="dash-meta">Create a listing to get started.</p>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}
