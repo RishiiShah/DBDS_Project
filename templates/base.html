@@ -40,6 +40,9 @@
                     <a href="{{ url_for('search.search') }}" class="nav-link">Search</a>
                     {% if current_user.is_authenticated %}
                     <a href="{{ url_for('main.dashboard') }}" class="nav-link">Dashboard</a>
+                    {% if current_user.is_admin %}
+                    <a href="{{ url_for('admin.dashboard') }}" class="nav-link">Admin</a>
+                    {% endif %}
                     <a href="{{ url_for('user.my_auctions') }}" class="nav-link">My Auctions</a>
                     <a href="{{ url_for('user.alerts') }}" class="nav-link" id="alerts-nav-link">Alerts <span
                             id="unread-badge"

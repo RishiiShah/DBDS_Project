@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Sales Reports{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:960px;margin:2rem auto;padding:0 1rem;">
+
+  <div style="margin-bottom:1.5rem;">
+    <a href="{{ url_for('admin.dashboard') }}" style="color:var(--text-muted);font-size:.875rem;">← Back to Admin</a>
+    <h1 style="font-size:1.8rem;font-weight:700;margin-top:.75rem;">Sales Reports</h1>
+    <p style="color:var(--text-muted);">Summary of all completed auction transactions.</p>
+  </div>
+
+  <!-- Totals -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:2rem;">
+    <div class="card" style="padding:1.25rem;text-align:center;">
+      <div style="font-size:2rem;font-weight:700;color:var(--primary);">{{ total_sales }}</div>
+      <div style="color:var(--text-muted);font-size:.875rem;">Completed Sales</div>
+    </div>
+    <div class="card" style="padding:1.25rem;text-align:center;">
+      <div style="font-size:2rem;font-weight:700;color:var(--primary);">${{ '%.2f' % total_revenue }}</div>
+      <div style="color:var(--text-muted);font-size:.875rem;">Total Revenue</div>
+    </div>
+    <div class="card" style="padding:1.25rem;text-align:center;">
+      <div style="font-size:2rem;font-weight:700;color:var(--primary);">${{ '%.2f' % total_commission }}</div>
+      <div style="color:var(--text-muted);font-size:.875rem;">BuyMe Commission (5%)</div>
+    </div>
+  </div>
+
+  {% if total_sales == 0 %}
+  <div class="card" style="padding:3rem;text-align:center;color:var(--text-muted);">
+    No completed transactions yet. Reports will populate once auctions close with winning bids above the reserve price.
+  </div>
+  {% else %}
+
+  <!-- Per Item -->
+  <div class="card" style="padding:1.5rem;margin-bottom:1.5rem;">
+    <h2 style="font-size:1.1rem;font-weight:600;margin-bottom:1rem;">Top Items by Sale Price</h2>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="text-align:left;border-bottom:1px solid var(--border);">
+          <th style="padding:.5rem .75rem;color:var(--text-muted);font-weight:500;">#</th>
+          <th style="padding:.5rem .75rem;color:var(--text-muted);font-weight:500;">Item</th>
+          <th style="padding:.5rem .75rem;color:var(--text-muted);font-weight:500;">Sale Price</th>
+          <th style="padding:.5rem .75rem;color:var(--text-muted);font-weight:500;">Commission</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for name, price, commission in per_item %}
+        <tr style="border-bottom:1px solid var(--border-subtle);">
+          <td style="padding:.6rem .75rem;color:var(--text-muted);">{{ loop.index }}</td>
+          <td style="padding:.6rem .75rem;font-weight:500;">{{ name }}</td>
+          <td style="padding:.6rem .75rem;">${{ '%.2f' % price }}</td>
+          <td style="padding:.6rem .75rem;color:var(--text-muted);">${{ '%.2f' % commission }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Per Category -->
+  <div class="card" style="padding:1.5rem;margin-bottom:1.5rem;">
+    <h2 style="font-size:1.1rem;font-weight:600;margin-bottom:1rem;">Earnings by Category</h2>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="text-align:left;border-bottom:1px solid var(--border);">
+          <th style="padding:.5rem .75rem;color:var(--text-muted);font-weight:500;">Category</th>
+          <th style="padding:.5rem .75rem;color:var(--text-muted);font-weight:500;">Sales</th>
+          <th style="padding:.5rem .75rem;color:var(--text-muted);font-weight:500;">Revenue</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cat_name, sales, revenue in per_category %}
+        <tr style="border-bottom:1px solid var(--border-subtle);">
+          <td style="padding:.6rem .75rem;font-weight:500;">{{ cat_name }}</td>
+          <td style="padding:.6rem .75rem;">{{ sales }}</td>
+          <td style="padding:.6rem .75rem;">${{ '%.2f' % revenue }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+
+    <!-- Top Sellers -->
+    <div class="card" style="padding:1.5rem;">
+      <h2 style="font-size:1.1rem;font-weight:600;margin-bottom:1rem;">Best Sellers</h2>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="text-align:left;border-bottom:1px solid var(--border);">
+            <th style="padding:.5rem .5rem;color:var(--text-muted);font-weight:500;">User</th>
+            <th style="padding:.5rem .5rem;color:var(--text-muted);font-weight:500;">Sales</th>
+            <th style="padding:.5rem .5rem;color:var(--text-muted);font-weight:500;">Revenue</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for username, sales, revenue in per_seller %}
+          <tr style="border-bottom:1px solid var(--border-subtle);">
+            <td style="padding:.5rem .5rem;font-weight:500;">{{ username }}</td>
+            <td style="padding:.5rem .5rem;">{{ sales }}</td>
+            <td style="padding:.5rem .5rem;">${{ '%.2f' % revenue }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Top Buyers -->
+    <div class="card" style="padding:1.5rem;">
+      <h2 style="font-size:1.1rem;font-weight:600;margin-bottom:1rem;">Best Buyers</h2>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="text-align:left;border-bottom:1px solid var(--border);">
+            <th style="padding:.5rem .5rem;color:var(--text-muted);font-weight:500;">User</th>
+            <th style="padding:.5rem .5rem;color:var(--text-muted);font-weight:500;">Purchases</th>
+            <th style="padding:.5rem .5rem;color:var(--text-muted);font-weight:500;">Spent</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for username, purchases, spent in per_buyer %}
+          <tr style="border-bottom:1px solid var(--border-subtle);">
+            <td style="padding:.5rem .5rem;font-weight:500;">{{ username }}</td>
+            <td style="padding:.5rem .5rem;">{{ purchases }}</td>
+            <td style="padding:.5rem .5rem;">${{ '%.2f' % spent }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

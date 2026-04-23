@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Create Rep Account{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:480px;margin:3rem auto;padding:0 1rem;">
+
+  <div style="margin-bottom:1.5rem;">
+    <a href="{{ url_for('admin.dashboard') }}" style="color:var(--text-muted);font-size:.875rem;">← Back to Admin</a>
+    <h1 style="font-size:1.5rem;font-weight:700;margin-top:.75rem;">Create Customer Rep</h1>
+  </div>
+
+  <div class="card" style="padding:1.75rem;">
+    <form method="POST">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+        <div>
+          <label style="display:block;font-size:.875rem;font-weight:500;margin-bottom:.4rem;">First Name</label>
+          <input type="text" name="first_name" value="{{ first_name or '' }}" required
+            style="width:100%;padding:.6rem .75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="display:block;font-size:.875rem;font-weight:500;margin-bottom:.4rem;">Last Name</label>
+          <input type="text" name="last_name" value="{{ last_name or '' }}" required
+            style="width:100%;padding:.6rem .75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);box-sizing:border-box;">
+        </div>
+      </div>
+
+      <div style="margin-bottom:1rem;">
+        <label style="display:block;font-size:.875rem;font-weight:500;margin-bottom:.4rem;">Username</label>
+        <input type="text" name="username" value="{{ username or '' }}" required
+          style="width:100%;padding:.6rem .75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);box-sizing:border-box;">
+      </div>
+
+      <div style="margin-bottom:1rem;">
+        <label style="display:block;font-size:.875rem;font-weight:500;margin-bottom:.4rem;">Email</label>
+        <input type="email" name="email" value="{{ email or '' }}" required
+          style="width:100%;padding:.6rem .75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);box-sizing:border-box;">
+      </div>
+
+      <div style="margin-bottom:1.5rem;">
+        <label style="display:block;font-size:.875rem;font-weight:500;margin-bottom:.4rem;">Password</label>
+        <input type="password" name="password" required
+          style="width:100%;padding:.6rem .75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);box-sizing:border-box;">
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%;">Create Rep Account</button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}
