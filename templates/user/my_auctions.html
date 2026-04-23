@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}{% if public_user is defined and public_user %}{{ public_user.username }}'s Auctions{% else %}My
+Auctions{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding:2rem 1rem;max-width:1200px;margin:auto;">
+
+    <h1 class="page-title" style="font-size:2rem;font-weight:800;margin-bottom:1.5rem;">
+        {% if public_user is defined and public_user %}
+        {{ public_user.full_name }}'s Auctions
+        {% else %}
+        My Auctions
+        {% endif %}
+    </h1>
+
+    {# ── Tab navigation ─────────────────────────────────────── #}
+    {% if not (public_user is defined and public_user) %}
+    <div style="display:flex;gap:.5rem;margin-bottom:1.5rem;border-bottom:2px solid var(--border);padding-bottom:0;">
+        <button class="tab-btn active" data-tab="selling" onclick="switchTab('selling')"
+            style="padding:.6rem 1.25rem;border:none;background:none;font-size:.9rem;font-weight:600;cursor:pointer;color:var(--primary);border-bottom:2px solid var(--primary);margin-bottom:-2px;">
+            Selling ({{ selling|length }})
+        </button>
+        <button class="tab-btn" data-tab="bidding" onclick="switchTab('bidding')"
+            style="padding:.6rem 1.25rem;border:none;background:none;font-size:.9rem;font-weight:600;cursor:pointer;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-2px;">
+            Bidding ({{ bidding|length }})
+        </button>
+        <button class="tab-btn" data-tab="won" onclick="switchTab('won')"
+            style="padding:.6rem 1.25rem;border:none;background:none;font-size:.9rem;font-weight:600;cursor:pointer;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-2px;">
+            Won ({{ won|length }})
+        </button>
+        <button class="tab-btn" data-tab="lost" onclick="switchTab('lost')"
+            style="padding:.6rem 1.25rem;border:none;background:none;font-size:.9rem;font-weight:600;cursor:pointer;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-2px;">
+            Lost ({{ lost|length }})
+        </button>
+    </div>
+    {% endif %}
+
+    {# ── Macro for auction table ────────────────────────────── #}
+    {% macro auction_table(auctions, empty_msg) %}
+    {% if auctions|length == 0 %}
+    <p style="color:var(--text-muted);text-align:center;padding:2rem 0;">{{ empty_msg }}</p>
+    {% else %}
+    <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:2px solid var(--border);">
+                    <th
+                        style="text-align:left;padding:.75rem;font-size:.85rem;color:var(--text-muted);font-weight:600;">
+                        Item</th>
+                    <th
+                        style="text-align:left;padding:.75rem;font-size:.85rem;color:var(--text-muted);font-weight:600;">
+                        Price</th>
+                    <th
+                        style="text-align:left;padding:.75rem;font-size:.85rem;color:var(--text-muted);font-weight:600;">
+                        Status</th>
+                    <th
+                        style="text-align:left;padding:.75rem;font-size:.85rem;color:var(--text-muted);font-weight:600;">
+                        Ends</th>
+                    <th
+                        style="text-align:right;padding:.75rem;font-size:.85rem;color:var(--text-muted);font-weight:600;">
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for auction in auctions %}
+                <tr style="border-bottom:1px solid var(--border);">
+                    <td style="padding:.75rem;font-weight:500;">{{ auction.item.name }}</td>
+                    <td style="padding:.75rem;color:var(--primary);font-weight:600;">${{
+                        "%.2f"|format(auction.current_price|float) }}</td>
+                    <td style="padding:.75rem;">
+                        <span style="font-size:.8rem;padding:.15rem .5rem;border-radius:6px;
+                                {% if auction.status == 'active' %}background:#22c55e22;color:#22c55e;
+                                {% elif auction.status == 'closed' %}background:#6b728022;color:#6b7280;
+                                {% else %}background:#ef444422;color:#ef4444;{% endif %}">
+                            {{ auction.status | title }}
+                        </span>
+                    </td>
+                    <td style="padding:.75rem;font-size:.85rem;color:var(--text-muted);">{{
+                        auction.end_time.strftime('%b %d, %Y %H:%M') }}</td>
+                    <td style="padding:.75rem;text-align:right;">
+                        <a href="{{ url_for('auction.auction_detail', id=auction.id) }}"
+                            class="btn btn-ghost btn-sm">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    {% endmacro %}
+
+    {# ── Tab panels ─────────────────────────────────────────── #}
+    <div id="tab-selling" class="tab-panel">
+        {{ auction_table(selling, "You're not selling any items yet.") }}
+    </div>
+    {% if not (public_user is defined and public_user) %}
+    <div id="tab-bidding" class="tab-panel" style="display:none;">
+        {{ auction_table(bidding, "You haven't placed any bids yet.") }}
+    </div>
+    <div id="tab-won" class="tab-panel" style="display:none;">
+        {{ auction_table(won, "You haven't won any auctions yet.") }}
+    </div>
+    <div id="tab-lost" class="tab-panel" style="display:none;">
+        {{ auction_table(lost, "No lost auctions.") }}
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    function switchTab(name) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+        document.getElementById('tab-' + name).style.display = 'block';
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            const isActive = b.dataset.tab === name;
+            b.style.color = isActive ? 'var(--primary)' : 'var(--text-muted)';
+            b.style.borderBottomColor = isActive ? 'var(--primary)' : 'transparent';
+        });
+    }
+</script>
+{% endblock %}

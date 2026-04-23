@@ -140,6 +140,13 @@ def create_auction():
     db.session.add(auction)
     db.session.commit()
 
+    # ── Trigger wishlist alerts for matching watches ─────────────
+    try:
+        from utils.watches import check_wishlist
+        check_wishlist(auction)
+    except Exception:
+        pass  # non-critical: don't break auction creation
+
     flash('Auction created successfully.', 'success')
     return redirect(url_for('auction.auction_detail', id=auction.id))
 

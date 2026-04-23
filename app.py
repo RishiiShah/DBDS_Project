@@ -38,6 +38,12 @@ def create_app():
     from routes.auction import auction_bp
     app.register_blueprint(auction_bp)
 
+    from routes.search import search_bp
+    app.register_blueprint(search_bp)
+
+    from routes.user import user_bp
+    app.register_blueprint(user_bp)
+
     # ── Create tables ───────────────────────────────────────────
     with app.app_context():
         db.create_all()

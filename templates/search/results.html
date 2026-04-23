@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}{% if similar_to %}Similar to {{ similar_to.item.name }}{% else %}Search Results{% endif %}{% endblock
+%}
+
+{% block content %}
+<div class="container" style="padding:2rem 1rem;max-width:1200px;margin:auto;">
+
+    <h1 class="page-title" style="font-size:2rem;font-weight:800;margin-bottom:1.5rem;">
+        {% if similar_to %}
+        Similar to "{{ similar_to.item.name }}"
+        {% else %}
+        Search Results{% if q %} for "{{ q }}"{% endif %}
+        {% endif %}
+    </h1>
+
+    <div style="display:flex;gap:2rem;flex-wrap:wrap;">
+
+        {# ── Filter sidebar ─────────────────────────────────── #}
+        <aside style="flex:0 0 260px;">
+            <form method="GET" action="{{ url_for('search.search') }}" id="search-filter-form" class="card"
+                style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;">
+                <h3 style="margin:0 0 1rem;font-size:1rem;font-weight:700;color:var(--text);">Filters</h3>
+
+                {# Keyword #}
+                <label
+                    style="display:block;margin-bottom:.25rem;font-size:.85rem;color:var(--text-muted);">Keyword</label>
+                <input type="text" name="q" value="{{ q or '' }}" placeholder="Search items…"
+                    style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);margin-bottom:1rem;font-size:.9rem;">
+
+                {# Category #}
+                <label
+                    style="display:block;margin-bottom:.25rem;font-size:.85rem;color:var(--text-muted);">Category</label>
+                <select name="category_id"
+                    style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);margin-bottom:1rem;font-size:.9rem;">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if category_id==cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                    {% for child in cat.children %}
+                    <option value="{{ child.id }}" {% if category_id==child.id %}selected{% endif %}>&nbsp;&nbsp;{{
+                        child.name }}</option>
+                    {% endfor %}
+                    {% endfor %}
+                </select>
+
+                {# Price range #}
+                <div style="display:flex;gap:.5rem;margin-bottom:1rem;">
+                    <div style="flex:1;">
+                        <label style="display:block;margin-bottom:.25rem;font-size:.85rem;color:var(--text-muted);">Min
+                            $</label>
+                        <input type="number" name="min_price" value="{{ min_price or '' }}" min="0" step="0.01"
+                            style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:.9rem;">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="display:block;margin-bottom:.25rem;font-size:.85rem;color:var(--text-muted);">Max
+                            $</label>
+                        <input type="number" name="max_price" value="{{ max_price or '' }}" min="0" step="0.01"
+                            style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:.9rem;">
+                    </div>
+                </div>
+
+                {# Condition #}
+                <label
+                    style="display:block;margin-bottom:.25rem;font-size:.85rem;color:var(--text-muted);">Condition</label>
+                <select name="condition"
+                    style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);margin-bottom:1rem;font-size:.9rem;">
+                    <option value="">Any Condition</option>
+                    <option value="new" {% if condition=='new' %}selected{% endif %}>New</option>
+                    <option value="like_new" {% if condition=='like_new' %}selected{% endif %}>Like New</option>
+                    <option value="good" {% if condition=='good' %}selected{% endif %}>Good</option>
+                    <option value="fair" {% if condition=='fair' %}selected{% endif %}>Fair</option>
+                    <option value="poor" {% if condition=='poor' %}selected{% endif %}>Poor</option>
+                </select>
+
+                {# Sort #}
+                <label style="display:block;margin-bottom:.25rem;font-size:.85rem;color:var(--text-muted);">Sort
+                    By</label>
+                <select name="sort"
+                    style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);margin-bottom:1.25rem;font-size:.9rem;">
+                    <option value="ending_soon" {% if sort=='ending_soon' %}selected{% endif %}>Ending Soon</option>
+                    <option value="newest" {% if sort=='newest' %}selected{% endif %}>Newest</option>
+                    <option value="price_asc" {% if sort=='price_asc' %}selected{% endif %}>Price: Low → High</option>
+                    <option value="price_desc" {% if sort=='price_desc' %}selected{% endif %}>Price: High → Low</option>
+                </select>
+
+                <button type="submit" class="btn btn-primary" style="width:100%;">Apply Filters</button>
+            </form>
+        </aside>
+
+        {# ── Results grid ───────────────────────────────────── #}
+        <section style="flex:1;min-width:0;">
+            {% if auctions | length == 0 %}
+            <p style="color:var(--text-muted);text-align:center;padding:3rem 0;">No auctions found. Try adjusting your
+                filters.</p>
+            {% else %}
+            <p style="color:var(--text-muted);margin-bottom:1rem;font-size:.9rem;">{{ auctions|length }} result{{ 's' if
+                auctions|length != 1 else '' }}</p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.25rem;">
+                {% for auction in auctions %}
+                <div class="card"
+                    style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;transition:transform .15s,box-shadow .15s;">
+                    <h3 style="margin:0 0 .5rem;font-size:1.05rem;">
+                        <a href="{{ url_for('auction.auction_detail', id=auction.id) }}"
+                            style="color:var(--text);text-decoration:none;">
+                            {{ auction.item.name }}
+                        </a>
+                    </h3>
+                    <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.5rem;">
+                        <span
+                            style="font-size:.75rem;padding:.15rem .5rem;border-radius:6px;background:var(--primary-alpha);color:var(--primary);">{{
+                            auction.item.condition | replace('_',' ') | title }}</span>
+                        {% if auction.item.category %}
+                        <span
+                            style="font-size:.75rem;padding:.15rem .5rem;border-radius:6px;background:var(--border);color:var(--text-muted);">{{
+                            auction.item.category.name }}</span>
+                        {% endif %}
+                    </div>
+                    <p style="color:var(--text-muted);font-size:.85rem;margin:0 0 .75rem;">
+                        {{ auction.item.description[:100] if auction.item.description else 'No description' }}{% if
+                        auction.item.description and auction.item.description|length > 100 %}…{% endif %}
+                    </p>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-weight:700;color:var(--primary);font-size:1.1rem;">${{
+                            "%.2f"|format(auction.current_price|float) }}</span>
+                        <span style="font-size:.8rem;color:var(--text-muted);">
+                            Ends {{ auction.end_time.strftime('%b %d, %H:%M') }}
+                        </span>
+                    </div>
+                    <div style="margin-top:.75rem;display:flex;gap:.5rem;">
+                        <a href="{{ url_for('auction.auction_detail', id=auction.id) }}" class="btn btn-primary btn-sm"
+                            style="flex:1;text-align:center;">View</a>
+                        <a href="{{ url_for('search.similar_items', id=auction.id) }}" class="btn btn-ghost btn-sm"
+                            style="flex:1;text-align:center;">Similar</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </section>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/search.js') }}"></script>
+{% endblock %}

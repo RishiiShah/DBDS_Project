@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Wishlist{% endblock %}
+
+{% block content %}
+<div class="container" style="padding:2rem 1rem;max-width:900px;margin:auto;">
+
+    <h1 class="page-title" style="font-size:2rem;font-weight:800;margin-bottom:1.5rem;">My Wishlist</h1>
+
+    {# ── Create new watch ───────────────────────────────────── #}
+    <div class="card"
+        style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:2rem;">
+        <h3 style="margin:0 0 1rem;font-size:1rem;font-weight:700;color:var(--text);">Create a New Watch</h3>
+        <form method="POST" action="{{ url_for('user.wishlist_create') }}">
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">
+                <div style="flex:2;min-width:200px;">
+                    <label style="display:block;margin-bottom:.25rem;font-size:.85rem;color:var(--text-muted);">Keyword
+                        *</label>
+                    <input type="text" name="keyword" required placeholder="e.g. iPhone, MacBook…"
+                        style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:.9rem;">
+                </div>
+                <div style="flex:1;min-width:160px;">
+                    <label
+                        style="display:block;margin-bottom:.25rem;font-size:.85rem;color:var(--text-muted);">Category</label>
+                    <select name="category_id"
+                        style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:.9rem;">
+                        <option value="">Any</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;">
+                <div style="flex:1;min-width:120px;">
+                    <label style="display:block;margin-bottom:.25rem;font-size:.85rem;color:var(--text-muted);">Min
+                        Price $</label>
+                    <input type="number" name="min_price" min="0" step="0.01"
+                        style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:.9rem;">
+                </div>
+                <div style="flex:1;min-width:120px;">
+                    <label style="display:block;margin-bottom:.25rem;font-size:.85rem;color:var(--text-muted);">Max
+                        Price $</label>
+                    <input type="number" name="max_price" min="0" step="0.01"
+                        style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:.9rem;">
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-primary">Add Watch</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {# ── Active watches ─────────────────────────────────────── #}
+    {% if watches | length == 0 %}
+    <div class="card"
+        style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:3rem;text-align:center;">
+        <p style="color:var(--text-muted);font-size:1.1rem;">You have no active watches. Create one above to get
+            notified when matching items are listed.</p>
+    </div>
+    {% else %}
+    <div style="overflow-x:auto;">
+        <table
+            style="width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+            <thead>
+                <tr style="border-bottom:2px solid var(--border);">
+                    <th
+                        style="text-align:left;padding:.75rem 1rem;font-size:.85rem;color:var(--text-muted);font-weight:600;">
+                        Keyword</th>
+                    <th
+                        style="text-align:left;padding:.75rem 1rem;font-size:.85rem;color:var(--text-muted);font-weight:600;">
+                        Category</th>
+                    <th
+                        style="text-align:left;padding:.75rem 1rem;font-size:.85rem;color:var(--text-muted);font-weight:600;">
+                        Price Range</th>
+                    <th
+                        style="text-align:left;padding:.75rem 1rem;font-size:.85rem;color:var(--text-muted);font-weight:600;">
+                        Created</th>
+                    <th
+                        style="text-align:right;padding:.75rem 1rem;font-size:.85rem;color:var(--text-muted);font-weight:600;">
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for watch in watches %}
+                <tr style="border-bottom:1px solid var(--border);">
+                    <td style="padding:.75rem 1rem;font-weight:500;">{{ watch.keyword }}</td>
+                    <td style="padding:.75rem 1rem;font-size:.9rem;color:var(--text-muted);">{{ watch.category.name if
+                        watch.category else 'Any' }}</td>
+                    <td style="padding:.75rem 1rem;font-size:.9rem;color:var(--text-muted);">
+                        {% if watch.min_price is not none or watch.max_price is not none %}
+                        {{ '$%.2f'|format(watch.min_price|float) if watch.min_price is not none else '—' }}
+                        –
+                        {{ '$%.2f'|format(watch.max_price|float) if watch.max_price is not none else '—' }}
+                        {% else %}
+                        Any
+                        {% endif %}
+                    </td>
+                    <td style="padding:.75rem 1rem;font-size:.85rem;color:var(--text-muted);">{{
+                        watch.created_at.strftime('%b %d, %Y') }}</td>
+                    <td style="padding:.75rem 1rem;text-align:right;">
+                        <form method="POST" action="{{ url_for('user.wishlist_delete', id=watch.id) }}"
+                            style="display:inline;" onsubmit="return confirm('Remove this watch?');">
+                            <button type="submit" class="btn btn-ghost btn-sm"
+                                style="color:#ef4444;font-size:.8rem;">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
