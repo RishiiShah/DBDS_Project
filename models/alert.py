@@ -18,6 +18,8 @@ class Alert(db.Model):
       - auction_lost: auction closed and you didn't win (or reserve not met)
       - item_available: an item matching your watch was listed
       - auto_bid_exceeded: someone bid past your auto-bid upper limit
+      - auction_cancelled: a rep removed an auction you were involved in
+      - bid_removed: a rep removed your bid
       - custom: a message from a customer rep or system
     """
     __tablename__ = 'alerts'
@@ -28,7 +30,8 @@ class Alert(db.Model):
     )
     alert_type: Mapped[str] = mapped_column(
         SAEnum('outbid', 'auction_won', 'auction_lost', 'item_available',
-               'auto_bid_exceeded', 'custom', name='alert_type'),
+               'auto_bid_exceeded', 'auction_cancelled', 'bid_removed', 'custom',
+               name='alert_type'),
         nullable=False,
     )
     message: Mapped[str] = mapped_column(Text, nullable=False)

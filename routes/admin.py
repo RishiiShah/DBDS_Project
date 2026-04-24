@@ -1,10 +1,12 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask_bcrypt import Bcrypt
 
 from models import db
 from models.user import User
 from utils.decorators import role_required
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+bcrypt = Bcrypt()
 
 
 @admin_bp.route('/')
@@ -133,7 +135,6 @@ def create_rep():
                                username=username, email=email,
                                first_name=first_name, last_name=last_name)
 
-    from app import bcrypt
     rep = User(
         username=username,
         email=email,

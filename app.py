@@ -47,6 +47,12 @@ def create_app():
     from routes.admin import admin_bp
     app.register_blueprint(admin_bp)
 
+    from routes.rep import rep_bp
+    app.register_blueprint(rep_bp)
+
+    from routes.support import support_bp
+    app.register_blueprint(support_bp)
+
     # ── Create tables ───────────────────────────────────────────
     with app.app_context():
         db.create_all()

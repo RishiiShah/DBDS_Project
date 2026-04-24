@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Customer Questions{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:900px;margin:2rem auto;padding:0 1rem;">
+
+  <div style="margin-bottom:1.5rem;">
+    <a href="{{ url_for('rep.dashboard') }}" style="color:var(--text-muted);font-size:.875rem;">← Back to Rep Dashboard</a>
+    <h1 style="font-size:1.8rem;font-weight:700;margin-top:.75rem;">Customer Questions</h1>
+  </div>
+
+  <!-- Filters -->
+  <form method="GET" style="display:flex;gap:.75rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search subject or body…"
+      style="flex:1;min-width:200px;padding:.6rem .75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);">
+    <select name="status"
+      style="padding:.6rem .75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);">
+      <option value="open"     {% if status_filter=='open'     %}selected{% endif %}>Open</option>
+      <option value="answered" {% if status_filter=='answered' %}selected{% endif %}>Answered</option>
+      <option value="closed"   {% if status_filter=='closed'   %}selected{% endif %}>Closed</option>
+    </select>
+    <button type="submit" class="btn btn-primary">Filter</button>
+  </form>
+
+  {% if questions %}
+    {% for question in questions %}
+    <div class="card" style="padding:1.5rem;margin-bottom:1rem;">
+
+      <!-- Question header -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:.75rem;">
+        <div>
+          <div style="font-weight:600;">{{ question.subject }}</div>
+          <div style="color:var(--text-muted);font-size:.8rem;margin-top:.2rem;">
+            From <strong>{{ question.user.username }}</strong> ·
+            {{ question.created_at.strftime('%b %d, %Y at %H:%M') }}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem;">
+          <span style="font-size:.75rem;font-weight:600;padding:.25rem .6rem;border-radius:12px;
+            {% if question.status == 'open' %}background:#7c2d12;color:#fed7aa;
+            {% elif question.status == 'answered' %}background:#14532d;color:#bbf7d0;
+            {% else %}background:var(--bg-input);color:var(--text-muted);{% endif %}">
+            {{ question.status|capitalize }}
+          </span>
+          {% if question.status != 'closed' %}
+          <form method="POST" action="{{ url_for('support.close_question', question_id=question.id) }}"
+            onsubmit="return confirm('Close this question?')">
+            <button type="submit" class="btn btn-ghost btn-sm">Close</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Question body -->
+      <p style="color:var(--text-muted);font-size:.9rem;line-height:1.5;margin-bottom:1rem;">{{ question.body }}</p>
+
+      <!-- Existing answers -->
+      {% if question.answers %}
+      <div style="margin-bottom:1rem;">
+        {% for answer in question.answers %}
+        <div style="background:var(--bg-input);border-radius:6px;padding:.75rem 1rem;margin-bottom:.5rem;">
+          <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:.35rem;">
+            <strong>{{ answer.rep.username }}</strong> replied · {{ answer.created_at.strftime('%b %d at %H:%M') }}
+          </div>
+          <div style="font-size:.9rem;">{{ answer.body }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Reply form -->
+      {% if question.status != 'closed' %}
+      <div style="border-top:1px solid var(--border);padding-top:1rem;">
+        <form method="POST" action="{{ url_for('support.reply', question_id=question.id) }}"
+          style="display:flex;gap:.75rem;align-items:flex-start;">
+          <textarea name="body" rows="2" required placeholder="Write a reply…"
+            style="flex:1;padding:.6rem .75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);resize:vertical;"></textarea>
+          <button type="submit" class="btn btn-primary btn-sm" style="white-space:nowrap;">Post Reply</button>
+        </form>
+      </div>
+      {% endif %}
+
+    </div>
+    {% endfor %}
+  {% else %}
+  <div class="card" style="padding:3rem;text-align:center;color:var(--text-muted);">
+    No {{ status_filter }} questions{% if q %} matching "{{ q }}"{% endif %}.
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Ask a Question{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:600px;margin:3rem auto;padding:0 1rem;">
+
+  <div style="margin-bottom:1.5rem;">
+    <a href="{{ url_for('support.my_questions') }}" style="color:var(--text-muted);font-size:.875rem;">← My Questions</a>
+    <h1 style="font-size:1.5rem;font-weight:700;margin-top:.75rem;">Ask Customer Support</h1>
+    <p style="color:var(--text-muted);">A customer representative will reply as soon as possible.</p>
+  </div>
+
+  <div class="card" style="padding:1.75rem;">
+    <form method="POST">
+      <div style="margin-bottom:1rem;">
+        <label style="display:block;font-size:.875rem;font-weight:500;margin-bottom:.4rem;">Subject</label>
+        <input type="text" name="subject" value="{{ subject or '' }}" required
+          placeholder="Brief description of your issue"
+          style="width:100%;padding:.6rem .75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);box-sizing:border-box;">
+      </div>
+      <div style="margin-bottom:1.5rem;">
+        <label style="display:block;font-size:.875rem;font-weight:500;margin-bottom:.4rem;">Message</label>
+        <textarea name="body" rows="6" required
+          placeholder="Describe your question or issue in detail…"
+          style="width:100%;padding:.6rem .75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);box-sizing:border-box;resize:vertical;">{{ body or '' }}</textarea>
+      </div>
+      <div style="display:flex;gap:.75rem;">
+        <button type="submit" class="btn btn-primary">Submit Question</button>
+        <a href="{{ url_for('support.my_questions') }}" class="btn btn-ghost">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  <div style="margin-top:1.5rem;text-align:center;">
+    <p style="color:var(--text-muted);font-size:.875rem;">
+      Looking for an existing answer?
+      <a href="{{ url_for('support.search') }}">Search Q&amp;A</a>
+    </p>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}Manage Users{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:1000px;margin:2rem auto;padding:0 1rem;">
+
+  <div style="margin-bottom:1.5rem;">
+    <a href="{{ url_for('rep.dashboard') }}" style="color:var(--text-muted);font-size:.875rem;">← Back to Rep Dashboard</a>
+    <h1 style="font-size:1.8rem;font-weight:700;margin-top:.75rem;">Manage Users</h1>
+  </div>
+
+  <!-- Search -->
+  <form method="GET" style="margin-bottom:1.5rem;display:flex;gap:.75rem;">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search by username, email or name…"
+      style="flex:1;padding:.6rem .75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);">
+    <button type="submit" class="btn btn-primary">Search</button>
+    {% if q %}<a href="{{ url_for('rep.users') }}" class="btn btn-ghost">Clear</a>{% endif %}
+  </form>
+
+  {% if users %}
+  <div class="card" style="padding:0;overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="text-align:left;border-bottom:1px solid var(--border);background:var(--bg-card);">
+          <th style="padding:.75rem 1rem;color:var(--text-muted);font-weight:500;">User</th>
+          <th style="padding:.75rem 1rem;color:var(--text-muted);font-weight:500;">Email</th>
+          <th style="padding:.75rem 1rem;color:var(--text-muted);font-weight:500;">Status</th>
+          <th style="padding:.75rem 1rem;color:var(--text-muted);font-weight:500;">Joined</th>
+          <th style="padding:.75rem 1rem;color:var(--text-muted);font-weight:500;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr style="border-bottom:1px solid var(--border-subtle);" id="user-{{ user.id }}">
+          <td style="padding:.75rem 1rem;">
+            <div style="font-weight:500;">{{ user.username }}</div>
+            <div style="color:var(--text-muted);font-size:.8rem;">{{ user.full_name }}</div>
+          </td>
+          <td style="padding:.75rem 1rem;color:var(--text-muted);">{{ user.email }}</td>
+          <td style="padding:.75rem 1rem;">
+            {% if user.is_active %}
+            <span style="color:#4ade80;font-size:.8rem;font-weight:500;">Active</span>
+            {% else %}
+            <span style="color:#f87171;font-size:.8rem;font-weight:500;">Inactive</span>
+            {% endif %}
+          </td>
+          <td style="padding:.75rem 1rem;color:var(--text-muted);font-size:.85rem;">
+            {{ user.created_at.strftime('%b %d, %Y') }}
+          </td>
+          <td style="padding:.75rem 1rem;">
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+
+              <!-- Edit info (inline expand) -->
+              <button onclick="toggleEdit({{ user.id }})" class="btn btn-ghost btn-sm">Edit Info</button>
+
+              <!-- Reset password -->
+              <button onclick="toggleReset({{ user.id }})" class="btn btn-ghost btn-sm">Reset PW</button>
+
+              <!-- Deactivate toggle -->
+              <form method="POST" action="{{ url_for('rep.deactivate_user', user_id=user.id) }}"
+                onsubmit="return confirm('{{ 'Reactivate' if not user.is_active else 'Deactivate' }} {{ user.username }}?')">
+                <button type="submit" class="btn btn-sm" style="background:{% if user.is_active %}#7f1d1d{% else %}#14532d{% endif %};color:#fff;border:none;">
+                  {{ 'Reactivate' if not user.is_active else 'Deactivate' }}
+                </button>
+              </form>
+
+            </div>
+
+            <!-- Edit info form (hidden) -->
+            <div id="edit-{{ user.id }}" style="display:none;margin-top:.75rem;padding:.75rem;background:var(--bg-input);border-radius:6px;">
+              <form method="POST" action="{{ url_for('rep.edit_user', user_id=user.id) }}">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">
+                  <input type="text" name="first_name" value="{{ user.first_name }}" placeholder="First name"
+                    style="padding:.5rem;background:var(--bg-card);border:1px solid var(--border);border-radius:4px;color:var(--text);">
+                  <input type="text" name="last_name" value="{{ user.last_name }}" placeholder="Last name"
+                    style="padding:.5rem;background:var(--bg-card);border:1px solid var(--border);border-radius:4px;color:var(--text);">
+                </div>
+                <input type="email" name="email" value="{{ user.email }}" placeholder="Email"
+                  style="width:100%;padding:.5rem;background:var(--bg-card);border:1px solid var(--border);border-radius:4px;color:var(--text);box-sizing:border-box;margin-bottom:.5rem;">
+                <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                <button type="button" onclick="toggleEdit({{ user.id }})" class="btn btn-ghost btn-sm">Cancel</button>
+              </form>
+            </div>
+
+            <!-- Reset password form (hidden) -->
+            <div id="reset-{{ user.id }}" style="display:none;margin-top:.75rem;padding:.75rem;background:var(--bg-input);border-radius:6px;">
+              <form method="POST" action="{{ url_for('rep.reset_password', user_id=user.id) }}">
+                <input type="password" name="new_password" placeholder="New password (min 6 chars)"
+                  style="width:100%;padding:.5rem;background:var(--bg-card);border:1px solid var(--border);border-radius:4px;color:var(--text);box-sizing:border-box;margin-bottom:.5rem;">
+                <button type="submit" class="btn btn-primary btn-sm">Reset Password</button>
+                <button type="button" onclick="toggleReset({{ user.id }})" class="btn btn-ghost btn-sm">Cancel</button>
+              </form>
+            </div>
+
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card" style="padding:3rem;text-align:center;color:var(--text-muted);">
+    No users found{% if q %} for "{{ q }}"{% endif %}.
+  </div>
+  {% endif %}
+
+</div>
+
+{% block scripts %}
+<script>
+  function toggleEdit(id) {
+    const el = document.getElementById('edit-' + id);
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  }
+  function toggleReset(id) {
+    const el = document.getElementById('reset-' + id);
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  }
+</script>
+{% endblock %}
+{% endblock %}

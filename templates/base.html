@@ -43,11 +43,15 @@
                     {% if current_user.is_admin %}
                     <a href="{{ url_for('admin.dashboard') }}" class="nav-link">Admin</a>
                     {% endif %}
+                    {% if current_user.is_rep or current_user.is_admin %}
+                    <a href="{{ url_for('rep.dashboard') }}" class="nav-link">Rep Panel</a>
+                    {% endif %}
                     <a href="{{ url_for('user.my_auctions') }}" class="nav-link">My Auctions</a>
                     <a href="{{ url_for('user.alerts') }}" class="nav-link" id="alerts-nav-link">Alerts <span
                             id="unread-badge"
                             style="display:none;background:var(--primary);color:#fff;font-size:.7rem;padding:.1rem .4rem;border-radius:10px;margin-left:.25rem;"></span></a>
                     <a href="{{ url_for('user.wishlist') }}" class="nav-link">Wishlist</a>
+                    <a href="{{ url_for('support.my_questions') }}" class="nav-link">Support</a>
                     {% endif %}
                 </div>
 
