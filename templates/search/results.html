@@ -125,11 +125,9 @@
                             Ends {{ auction.end_time.strftime('%b %d, %H:%M') }}
                         </span>
                     </div>
-                    <div style="margin-top:.75rem;display:flex;gap:.5rem;">
+                    <div style="margin-top:.75rem;">
                         <a href="{{ url_for('auction.auction_detail', id=auction.id) }}" class="btn btn-primary btn-sm"
-                            style="flex:1;text-align:center;">View</a>
-                        <a href="{{ url_for('search.similar_items', id=auction.id) }}" class="btn btn-ghost btn-sm"
-                            style="flex:1;text-align:center;">Similar</a>
+                            style="width:100%;text-align:center;">View</a>
                     </div>
                 </div>
                 {% endfor %}

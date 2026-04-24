@@ -59,6 +59,13 @@ def process_new_bid(auction, bid_amount, bidder_id: int):
             )
 
     if not contenders:
+        if auction.current_winner_id and auction.current_winner_id != bidder_id:
+            _create_alert(
+                user_id=auction.current_winner_id,
+                alert_type='outbid',
+                message=f'You were outbid on auction #{auction.id}.',
+                auction_id=auction.id,
+            )
         auction.current_price = bid_amount
         auction.current_winner_id = bidder_id
         db.session.commit()
@@ -91,6 +98,78 @@ def process_new_bid(auction, bid_amount, bidder_id: int):
     auction.current_winner_id = winner_auto_bid.bidder_id
     db.session.commit()
     return auto_bid
+
+
+def trigger_autobid_on_register(auction, new_autobid) -> None:
+    """
+    Resolve auto-bid competition immediately when a new auto-bid is registered.
+    Without this, two users setting auto-bids with no manual bid in between
+    would leave the price stale and winner unset.
+    """
+    increment = _to_decimal(auction.bid_increment)
+    current = _to_decimal(auction.current_price)
+    new_limit = _to_decimal(new_autobid.upper_limit)
+    new_bidder_id = new_autobid.bidder_id
+
+    if auction.current_winner_id == new_bidder_id:
+        # Already leading — auto-bid just raised our ceiling, nothing to resolve now.
+        db.session.commit()
+        return
+
+    # Best competing auto-bid (someone other than the new bidder)
+    competing = (
+        AutoBid.query.filter_by(auction_id=auction.id, is_active=True)
+        .filter(AutoBid.bidder_id != new_bidder_id)
+        .order_by(AutoBid.upper_limit.desc(), AutoBid.created_at.asc())
+        .first()
+    )
+
+    if not auction.current_winner_id:
+        # No winner yet — new bidder takes the lead at starting/current price.
+        db.session.add(Bid(auction_id=auction.id, bidder_id=new_bidder_id,
+                           amount=current, is_auto=True))
+        auction.current_winner_id = new_bidder_id
+        db.session.commit()
+        return
+
+    if not competing:
+        # Current winner has no auto-bid — new bidder challenges at current + increment.
+        challenge = current + increment
+        old_winner = auction.current_winner_id
+        db.session.add(Bid(auction_id=auction.id, bidder_id=new_bidder_id,
+                           amount=challenge, is_auto=True))
+        auction.current_price = challenge
+        auction.current_winner_id = new_bidder_id
+        _create_alert(old_winner, 'outbid',
+                      f'You were outbid on auction #{auction.id}.', auction.id)
+        db.session.commit()
+        return
+
+    # Two auto-bids compete — proxy (eBay-style) resolution.
+    competing_limit = _to_decimal(competing.upper_limit)
+
+    if new_limit > competing_limit:
+        # New bidder wins.
+        winner_amount = min(new_limit, competing_limit + increment)
+        db.session.add(Bid(auction_id=auction.id, bidder_id=new_bidder_id,
+                           amount=winner_amount, is_auto=True))
+        auction.current_price = winner_amount
+        auction.current_winner_id = new_bidder_id
+        competing.is_active = False
+        _create_alert(competing.bidder_id, 'auto_bid_exceeded',
+                      f'Auto-bid limit reached on auction #{auction.id}.', auction.id)
+    else:
+        # Existing auto-bidder retains the lead (tie goes to the earlier bidder).
+        winner_amount = min(competing_limit, new_limit + increment)
+        db.session.add(Bid(auction_id=auction.id, bidder_id=competing.bidder_id,
+                           amount=winner_amount, is_auto=True))
+        auction.current_price = winner_amount
+        # current_winner_id stays unchanged — existing bidder keeps the lead
+        new_autobid.is_active = False
+        _create_alert(new_bidder_id, 'auto_bid_exceeded',
+                      f'Auto-bid limit reached on auction #{auction.id}.', auction.id)
+
+    db.session.commit()
 
 
 def close_expired_auctions() -> int:

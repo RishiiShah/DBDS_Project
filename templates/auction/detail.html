@@ -57,13 +57,46 @@
         <article class="dash-card">
           <div class="dash-card-content" style="width: 100%;">
             <h3>Auto-Bid</h3>
+
+            {% if user_auto_bid %}
+              <div style="background:var(--primary-alpha);border:1px solid var(--primary);border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;">
+                <p class="dash-meta" style="margin:0 0 .25rem;">
+                  <strong>Status:</strong>
+                  {% if user_auto_bid.is_active %}
+                    <span style="color:var(--primary);">Active</span>
+                  {% else %}
+                    <span style="color:var(--text-muted);">Inactive</span>
+                  {% endif %}
+                </p>
+                <p class="dash-meta" style="margin:0;">
+                  <strong>Your limit:</strong> ${{ '%.2f'|format(user_auto_bid.upper_limit|float) }}
+                </p>
+              </div>
+
+              {% if user_auto_bid.is_active %}
+                <form method="post" action="{{ url_for('auction.cancel_autobid', id=auction.id) }}" style="margin-bottom:.75rem;">
+                  <button class="btn btn-outline btn-full" type="submit"
+                          style="border-color:#e05252;color:#e05252;"
+                          onclick="return confirm('Cancel your auto-bid?')">Cancel Auto-Bid</button>
+                </form>
+              {% endif %}
+            {% endif %}
+
             <form method="post" action="{{ url_for('auction.set_autobid', id=auction.id) }}" class="auth-form">
               <div class="form-group">
-                <label class="form-label" for="upper_limit">Upper limit ($)</label>
+                <label class="form-label" for="upper_limit">
+                  {{ 'Update limit ($)' if user_auto_bid and user_auto_bid.is_active else 'Upper limit ($)' }}
+                </label>
                 <input class="form-input" id="upper_limit" name="upper_limit" type="number" step="0.01"
-                       min="{{ '%.2f'|format(auction.minimum_bid) }}" required>
+                       min="{{ '%.2f'|format(auction.minimum_bid) }}"
+                       {% if user_auto_bid and user_auto_bid.is_active %}
+                         value="{{ '%.2f'|format(user_auto_bid.upper_limit|float) }}"
+                       {% endif %}
+                       required>
               </div>
-              <button class="btn btn-outline btn-full" type="submit">Set Auto-Bid</button>
+              <button class="btn btn-outline btn-full" type="submit">
+                {{ 'Update Auto-Bid' if user_auto_bid and user_auto_bid.is_active else 'Set Auto-Bid' }}
+              </button>
             </form>
           </div>
         </article>
@@ -104,6 +137,45 @@
         </div>
       </div>
     </article>
+
+    {# ── Similar auctions ─────────────────────────────────────── #}
+    {% if similar %}
+    <div style="margin-top: 2rem;">
+      <h2 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem;">Similar Auctions</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem;">
+        {% for s in similar %}
+        <article class="dash-card" style="margin: 0;">
+          <div class="dash-card-content" style="width: 100%;">
+            <div style="display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: .5rem;">
+              <span style="font-size: .7rem; padding: .15rem .45rem; border-radius: 6px; background: var(--primary-alpha); color: var(--primary);">
+                {{ s.item.condition | replace('_', ' ') | title }}
+              </span>
+              {% if s.item.category %}
+              <span style="font-size: .7rem; padding: .15rem .45rem; border-radius: 6px; background: var(--border); color: var(--text-muted);">
+                {{ s.item.category.name }}
+              </span>
+              {% endif %}
+            </div>
+            <h3 style="font-size: .95rem; margin: 0 0 .4rem;">
+              <a href="{{ url_for('auction.auction_detail', id=s.id) }}"
+                 style="color: var(--text); text-decoration: none;">{{ s.item.name }}</a>
+            </h3>
+            <p class="dash-meta" style="margin-bottom: .5rem;">
+              {{ s.item.description[:80] if s.item.description else 'No description.' }}{% if s.item.description and s.item.description|length > 80 %}…{% endif %}
+            </p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: .75rem;">
+              <span style="font-weight: 700; color: var(--primary);">${{ '%.2f'|format(s.current_price|float) }}</span>
+              <span class="dash-meta">{{ s.bid_count }} bid{{ 's' if s.bid_count != 1 else '' }}</span>
+            </div>
+            <a href="{{ url_for('auction.auction_detail', id=s.id) }}"
+               class="btn btn-primary btn-sm btn-full">View Auction</a>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
   </div>
 </section>
 {% endblock %}

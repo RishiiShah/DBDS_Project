@@ -1,5 +1,67 @@
 {% extends 'base.html' %}
 
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+  .tooltip-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-left: .35rem;
+    cursor: default;
+  }
+  .tooltip-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    color: var(--bg, #0f0f0f);
+    font-size: .65rem;
+    font-weight: 700;
+    line-height: 1;
+    user-select: none;
+  }
+  .tooltip-box {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-card, #1a1a1a);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: .8rem;
+    font-weight: 400;
+    line-height: 1.45;
+    padding: .55rem .75rem;
+    border-radius: 8px;
+    width: 230px;
+    white-space: normal;
+    z-index: 100;
+    pointer-events: none;
+    transition: opacity .15s;
+  }
+  .tooltip-box::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--border);
+  }
+  .tooltip-wrap:hover .tooltip-box,
+  .tooltip-wrap:focus-within .tooltip-box {
+    visibility: visible;
+    opacity: 1;
+  }
+</style>
+{% endblock %}
+
 {% block title %}Create Auction{% endblock %}
 
 {% block content %}
@@ -24,15 +86,11 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="category_id">Category</label>
-            <select class="form-input" id="category_id" name="category_id" required>
+            <label class="form-label" for="root_category">Category</label>
+            <select class="form-input" id="root_category">
               <option value="">Choose a category</option>
-              {% for category in categories %}
-                <option value="{{ category.id }}"
-                        data-required-fields='{{ (category.required_fields or [])|tojson }}'
-                        {% if selected_category == category.id %}selected{% endif %}>
-                  {{ category.name }}
-                </option>
+              {% for root in root_categories %}
+                <option value="{{ root.id }}">{{ root.name }}</option>
               {% endfor %}
             </select>
           </div>
@@ -47,16 +105,35 @@
           </div>
         </div>
 
+        <div class="form-group" id="subcategory-group" style="display:none;">
+          <label class="form-label" for="category_id">Subcategory</label>
+          <select class="form-input" id="category_id" name="category_id">
+            <option value="">Choose a subcategory</option>
+          </select>
+        </div>
+
         <div id="dynamic-attributes" class="auth-form"></div>
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="starting_price">Starting price ($)</label>
+            <label class="form-label" for="starting_price">
+              Starting price ($)
+              <span class="tooltip-wrap" tabindex="0">
+                <span class="tooltip-icon">?</span>
+                <span class="tooltip-box">The opening bid price. Bidding starts here — no one can bid below this amount.</span>
+              </span>
+            </label>
             <input class="form-input" type="number" min="0.01" step="0.01" id="starting_price" name="starting_price" required
                    value="{{ request.form.get('starting_price', '') }}">
           </div>
           <div class="form-group">
-            <label class="form-label" for="reserve_price">Reserve price ($)</label>
+            <label class="form-label" for="reserve_price">
+              Reserve price ($)
+              <span class="tooltip-wrap" tabindex="0">
+                <span class="tooltip-icon">?</span>
+                <span class="tooltip-box">Your secret minimum. If the final bid is below this amount when the auction closes, no sale occurs and you keep the item.</span>
+              </span>
+            </label>
             <input class="form-input" type="number" min="0.01" step="0.01" id="reserve_price" name="reserve_price" required
                    value="{{ request.form.get('reserve_price', '') }}">
           </div>
@@ -64,14 +141,23 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="bid_increment">Bid increment ($)</label>
+            <label class="form-label" for="bid_increment">
+              Bid increment ($)
+              <span class="tooltip-wrap" tabindex="0">
+                <span class="tooltip-icon">?</span>
+                <span class="tooltip-box">The minimum amount a new bid must exceed the current price by. E.g. if current price is $100 and increment is $5, the next valid bid is at least $105.</span>
+              </span>
+            </label>
             <input class="form-input" type="number" min="0.01" step="0.01" id="bid_increment" name="bid_increment" required
                    value="{{ request.form.get('bid_increment', '') }}">
           </div>
           <div class="form-group">
-            <label class="form-label" for="end_time">Auction end time (UTC)</label>
-            <input class="form-input" type="datetime-local" id="end_time" name="end_time" required
-                   value="{{ request.form.get('end_time', '') }}">
+            <label class="form-label">
+              Auction end time
+              <span style="font-weight:400;color:var(--text-muted);font-size:.8rem;">(your local time)</span>
+            </label>
+            <input class="form-input" id="end_time_display" placeholder="Pick date &amp; time" readonly>
+            <input type="hidden" id="end_time" name="end_time" value="{{ request.form.get('end_time', '') }}">
           </div>
         </div>
 
@@ -83,11 +169,41 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
   (() => {
-    const categorySelect = document.getElementById('category_id');
-    const dynamicAttributes = document.getElementById('dynamic-attributes');
+    // ── Flatpickr date+time picker ───────────────────────────────
+    const hiddenInput = document.getElementById('end_time');
+
+    flatpickr('#end_time_display', {
+      enableTime: true,
+      dateFormat: 'D, M d Y at h:i K',   // display format (human-readable)
+      minDate: 'today',
+      defaultHour: 23,
+      defaultMinute: 59,
+      time_24hr: false,
+      onChange(selectedDates) {
+        if (!selectedDates.length) { hiddenInput.value = ''; return; }
+        const d = selectedDates[0];
+        // format to YYYY-MM-DDTHH:MM for the backend
+        const pad = n => String(n).padStart(2, '0');
+        hiddenInput.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      },
+      // restore display value on page re-load after validation error
+      onReady(_, __, fp) {
+        if (hiddenInput.value) fp.setDate(hiddenInput.value, false);
+      },
+    });
+
+    // ── Cascading category → subcategory dropdowns ──────────────
+    const ALL_LEAVES = {{ leaf_categories | tojson }};
+    const SELECTED_LEAF_ID = {{ selected_category or 'null' }};
     const existingValues = {{ request.form.to_dict()|tojson }};
+
+    const rootSelect = document.getElementById('root_category');
+    const subGroup = document.getElementById('subcategory-group');
+    const subSelect = document.getElementById('category_id');
+    const dynamicAttributes = document.getElementById('dynamic-attributes');
 
     function titleize(value) {
       return value.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -95,8 +211,8 @@
 
     function renderRequiredFields() {
       dynamicAttributes.innerHTML = '';
-      const selected = categorySelect.options[categorySelect.selectedIndex];
-      if (!selected) return;
+      const selected = subSelect.options[subSelect.selectedIndex];
+      if (!selected || !selected.value) return;
 
       const fields = JSON.parse(selected.getAttribute('data-required-fields') || '[]');
       fields.forEach(field => {
@@ -112,7 +228,7 @@
         input.className = 'form-input';
         input.id = `attr_${field}`;
         input.name = `attr_${field}`;
-        input.required = true;
+        input.required = false;
         input.value = existingValues[`attr_${field}`] || '';
 
         wrapper.appendChild(label);
@@ -121,8 +237,41 @@
       });
     }
 
-    categorySelect.addEventListener('change', renderRequiredFields);
-    renderRequiredFields();
+    function populateSubcategories(rootId, preselectLeafId) {
+      subSelect.innerHTML = '<option value="">Choose a subcategory</option>';
+      if (!rootId) { subGroup.style.display = 'none'; return; }
+
+      const leaves = ALL_LEAVES.filter(l => l.root_id === rootId);
+      leaves.forEach(leaf => {
+        const opt = document.createElement('option');
+        opt.value = leaf.id;
+        opt.textContent = leaf.name;
+        opt.setAttribute('data-required-fields', JSON.stringify(leaf.required_fields || []));
+        if (preselectLeafId && leaf.id === preselectLeafId) opt.selected = true;
+        subSelect.appendChild(opt);
+      });
+
+      subGroup.style.display = 'block';
+      renderRequiredFields();
+    }
+
+    rootSelect.addEventListener('change', function () {
+      populateSubcategories(parseInt(this.value) || null, null);
+    });
+
+    subSelect.addEventListener('change', renderRequiredFields);
+
+    // Restore state after a validation error
+    if (SELECTED_LEAF_ID) {
+      const leaf = ALL_LEAVES.find(l => l.id === SELECTED_LEAF_ID);
+      if (leaf) {
+        // Pre-select the root dropdown
+        Array.from(rootSelect.options).forEach(opt => {
+          if (parseInt(opt.value) === leaf.root_id) opt.selected = true;
+        });
+        populateSubcategories(leaf.root_id, SELECTED_LEAF_ID);
+      }
+    }
   })();
 </script>
 {% endblock %}

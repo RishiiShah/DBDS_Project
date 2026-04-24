@@ -8,7 +8,7 @@ from sqlalchemy.orm import joinedload
 from models import db
 from models.auction import Auction, AutoBid, Bid
 from models.item import Category, Item, ItemAttribute
-from utils.bidding import close_expired_auctions, process_new_bid
+from utils.bidding import close_expired_auctions, process_new_bid, trigger_autobid_on_register
 
 auction_bp = Blueprint('auction', __name__)
 
@@ -25,6 +25,28 @@ def _parse_decimal(raw_value: str, field_name: str):
 
 def _leaf_categories():
     return Category.query.filter(~Category.children.any()).order_by(Category.name.asc()).all()
+
+
+def _root_categories():
+    return Category.query.filter_by(level=0).order_by(Category.name.asc()).all()
+
+
+def _leaf_categories_with_root():
+    """Return leaf categories annotated with their root ancestor id."""
+    all_cats = {c.id: c for c in Category.query.all()}
+    leaves = [c for c in all_cats.values() if not c.children.count()]
+    result = []
+    for leaf in sorted(leaves, key=lambda c: c.name):
+        cur = leaf
+        while cur.parent_id is not None:
+            cur = all_cats[cur.parent_id]
+        result.append({
+            'id': leaf.id,
+            'name': leaf.name,
+            'root_id': cur.id,
+            'required_fields': leaf.required_fields or [],
+        })
+    return result
 
 
 @auction_bp.route('/auctions')
@@ -55,10 +77,16 @@ def list_auctions():
 @auction_bp.route('/auction/create', methods=['GET', 'POST'])
 @login_required
 def create_auction():
-    categories = _leaf_categories()
+    root_categories = _root_categories()
+    leaf_categories = _leaf_categories_with_root()
 
     if request.method == 'GET':
-        return render_template('auction/create.html', categories=categories, selected_category=None)
+        return render_template(
+            'auction/create.html',
+            root_categories=root_categories,
+            leaf_categories=leaf_categories,
+            selected_category=None,
+        )
 
     name = request.form.get('name', '').strip()
     description = request.form.get('description', '').strip()
@@ -68,7 +96,12 @@ def create_auction():
 
     if not category_id:
         flash('Please select a category.', 'error')
-        return render_template('auction/create.html', categories=categories, selected_category=None)
+        return render_template(
+            'auction/create.html',
+            root_categories=root_categories,
+            leaf_categories=leaf_categories,
+            selected_category=None,
+        )
 
     category = Category.query.get_or_404(category_id)
 
@@ -99,9 +132,7 @@ def create_auction():
     item_attributes = []
     for field_name in required_fields:
         field_value = request.form.get(f'attr_{field_name}', '').strip()
-        if not field_value:
-            errors.append(f'"{field_name}" is required for {category.name}.')
-        else:
+        if field_value:
             item_attributes.append((field_name, field_value))
 
     if errors:
@@ -109,9 +140,9 @@ def create_auction():
             flash(error, 'error')
         return render_template(
             'auction/create.html',
-            categories=categories,
+            root_categories=root_categories,
+            leaf_categories=leaf_categories,
             selected_category=category_id,
-            selected_required_fields=required_fields,
         )
 
     item = Item(
@@ -160,7 +191,32 @@ def auction_detail(id: int):
         .order_by(Bid.created_at.desc(), Bid.amount.desc())
         .all()
     )
-    return render_template('auction/detail.html', auction=auction, bids=bids)
+    user_auto_bid = None
+    if current_user.is_authenticated:
+        user_auto_bid = AutoBid.query.filter_by(
+            auction_id=auction.id, bidder_id=current_user.id
+        ).first()
+
+    from utils.similarity import find_similar
+    similar = find_similar(auction, limit=100)
+    return render_template(
+        'auction/detail.html',
+        auction=auction,
+        bids=bids,
+        user_auto_bid=user_auto_bid,
+        similar=similar,
+    )
+
+
+@auction_bp.route('/auction/<int:id>/autobid/cancel', methods=['POST'])
+@login_required
+def cancel_autobid(id: int):
+    auto_bid = AutoBid.query.filter_by(auction_id=id, bidder_id=current_user.id).first()
+    if auto_bid and auto_bid.is_active:
+        auto_bid.is_active = False
+        db.session.commit()
+        flash('Auto-bid cancelled.', 'success')
+    return redirect(url_for('auction.auction_detail', id=id))
 
 
 @auction_bp.route('/auction/<int:id>/bid', methods=['POST'])
@@ -235,8 +291,9 @@ def set_autobid(id: int):
         )
         db.session.add(auto_bid)
 
-    db.session.commit()
-    flash('Auto-bid updated.', 'success')
+    db.session.flush()  # make the auto-bid record visible before resolution
+    trigger_autobid_on_register(auction, auto_bid)  # resolves competition and commits
+    flash('Auto-bid set.', 'success')
     return redirect(url_for('auction.auction_detail', id=id))
 
 

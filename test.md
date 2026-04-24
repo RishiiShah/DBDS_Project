@@ -1,6 +1,8 @@
 # BuyMe — Full App Test Guide
 
-Run the app: `python app.py` → open `http://127.0.0.1:5000`
+**Setup:** `python seed.py` then `python app.py` → open `http://127.0.0.1:5000`
+
+For a clean slate: delete `instance/buyme.db` (or `buyme.db`), then re-run `python seed.py`.
 
 ---
 
@@ -45,8 +47,11 @@ Run the app: `python app.py` → open `http://127.0.0.1:5000`
 
 ### 3. Browse & Search
 
-- [ ] Click **Browse** → category tree shows Electronics → Computers, Phones, Audio, Gaming → leaf categories below each
-- [ ] Click a category (e.g. Laptops) → shows active auctions in that category
+- [ ] Click **Browse** → two root categories visible: **Electronics** and **Sporting Goods**
+- [ ] Browse Electronics → Computers, Gaming, Mobile Phones, Wearables, Home Electronics → leaf subcategories below each
+- [ ] Browse Sporting Goods → Cycling, Fitness, Outdoor & Adventure, Team Sports → leaf subcategories below each
+- [ ] Click a leaf category (e.g. Laptops) → shows active auctions in that category
+- [ ] Click a Sporting Goods leaf (e.g. Bikes) → shows Sporting Goods auctions in that category
 - [ ] Click **Search** → search for `MacBook` → results shown with condition badge, category, description snippet, price
 - [ ] Filter by price range (e.g. min $500) → results narrow correctly
 - [ ] Filter by condition → results narrow correctly
@@ -61,27 +66,41 @@ Run the app: `python app.py` → open `http://127.0.0.1:5000`
 - [ ] Log in → visit an auction you are **not** the seller of → bid form is visible
 - [ ] Place a bid below the minimum → error: "Bid must be at least $X.XX"
 - [ ] Place a valid bid → success flash, bid appears in history, current price updates
-- [ ] Log in as a different user → place a higher bid → first user receives an **outbid** alert
+- [ ] Log in as a different user → place a higher manual bid → first user receives an **outbid** alert (covers both manual-vs-manual and manual-vs-auto scenarios)
 - [ ] Try bidding on your own auction → error: "Sellers cannot bid on their own auctions"
-- [ ] Click **Similar** on any auction → similar items page loads
+- [ ] Scroll to bottom of any auction detail page → **Similar Auctions** section shows related listings (same category or similar price); click **View Auction** on one to navigate to it
 
 ---
 
 ### 5. Auto-Bid
 
-- [ ] On an active auction, set an auto-bid upper limit at or above the current minimum → success
-- [ ] Log in as another user → place a manual bid lower than the auto-bid limit → auto-bid fires, auto-bidder retakes the lead
+- [ ] On an active auction, set an auto-bid upper limit at or above the current minimum → success flash shown; if no current winner, price updates and you become the winner immediately
+- [ ] After setting, the **Auto-Bid** card shows a status banner: "Active — Your limit: $XXX.XX"
+- [ ] The form pre-fills with your current limit and button reads "Update Auto-Bid"
+- [ ] Update the limit to a higher value → banner reflects the new amount
+- [ ] Click **Cancel Auto-Bid** → confirm prompt → auto-bid deactivated; banner shows "Inactive"; form resets to "Set Auto-Bid"
+- [ ] Log in as another user → place a manual bid lower than the auto-bid limit → auto-bid fires, auto-bidder retakes the lead; outbid alert sent to the manual bidder
 - [ ] Place a bid above the auto-bid upper limit → auto-bidder's limit is exhausted → they receive an **auto_bid_exceeded** alert
+
+**Parallel auto-bid test (two users both using auto-bid):**
+- [ ] User A logs in → sets auto-bid at $200 → becomes winner at starting price immediately; bid history shows an Auto entry for User A
+- [ ] User B logs in → sets auto-bid at $150 → price updates instantly; User A retains lead at `min($200, $150+increment)`; User B receives **auto_bid_exceeded** alert; bid history shows auto entries for both users
+- [ ] Reverse: User B sets auto-bid at $250 when User A holds $200 → User B wins at `min($250, $200+increment)`; User A receives **auto_bid_exceeded** alert
+- [ ] Tie case: both users set equal limits → the first bidder (earlier `created_at`) retains the lead; second bidder receives **auto_bid_exceeded** alert
 
 ---
 
 ### 6. Create an Auction (Sell)
 
 - [ ] Click **My Auctions** → **Create Auction** (or go to `/auction/create`)
-- [ ] Select a leaf category (e.g. Smartphones) → category-specific required fields appear (brand, os, screen_size, etc.)
-- [ ] Submit with a missing required field → validation error shown
+- [ ] **Category** dropdown shows root categories (Electronics, Sporting Goods)
+- [ ] Select **Electronics** → **Subcategory** dropdown appears with Electronics leaf categories
+- [ ] Select **Sporting Goods** → **Subcategory** dropdown repopulates with Sporting Goods leaves (Bikes, Camping Gear, etc.)
+- [ ] Select a subcategory that has required fields (e.g. Laptops → brand, ram, storage, screen_size) → those fields appear below the subcategory dropdown
+- [ ] Select a subcategory with no required fields (e.g. Bikes → frame_size, material, gears) → those fields appear (or no extra fields if none defined)
 - [ ] Fill all fields with end time in the past → error: "End time must be in the future"
-- [ ] Fill all fields correctly → auction created → redirected to auction detail page
+- [ ] Trigger a validation error intentionally (e.g. leave item name blank) → on reload, both Category and Subcategory dropdowns restore to previous selections
+- [ ] Fill all fields correctly (use Flatpickr to pick date+time) → auction created → redirected to auction detail page
 - [ ] New auction appears in **My Auctions → Selling** tab
 - [ ] If a wishlist watch matches the new auction's keyword → alert fires for the watching user
 
