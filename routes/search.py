@@ -154,16 +154,15 @@ def _render_browse(path_category_id=None):
     auctions = _browse_query(selected_category=selected_category, **params).all()
     attribute_fields = _category_attribute_fields(selected_category)
     selected_root_id = _root_category_id(selected_category)
-    has_active_filters = any(
-        [
-            bool(params['q']),
-            params['min_price'] is not None,
-            params['max_price'] is not None,
-            bool(params['condition']),
-            params['sort'] != 'ending_soon',
-            bool(params['attribute_filters']),
-        ]
-    )
+    active_filter_count = sum([
+        bool(params['q']),
+        params['min_price'] is not None,
+        params['max_price'] is not None,
+        bool(params['condition']),
+        params['sort'] != 'ending_soon',
+        len(params['attribute_filters']),
+    ])
+    has_active_filters = active_filter_count > 0
     return render_template(
         'search/browse.html',
         categories=_root_categories(),
@@ -172,6 +171,7 @@ def _render_browse(path_category_id=None):
         selected_root_id=selected_root_id,
         auctions=auctions,
         has_active_filters=has_active_filters,
+        active_filter_count=active_filter_count,
         available_attribute_fields=attribute_fields,
         **params,
     )

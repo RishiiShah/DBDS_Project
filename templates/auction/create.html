@@ -189,7 +189,7 @@
 
     function populateSubcategories(rootId, preselectLeafId) {
       subSelect.innerHTML = '<option value="">Choose a subcategory</option>';
-      if (!rootId) { subGroup.style.display = 'none'; return; }
+      if (!rootId) { subGroup.classList.add('hidden'); return; }
 
       const leaves = ALL_LEAVES.filter(l => l.root_id === rootId);
       leaves.forEach(leaf => {
@@ -201,7 +201,7 @@
         subSelect.appendChild(opt);
       });
 
-      subGroup.style.display = 'block';
+      subGroup.classList.remove('hidden');
       renderRequiredFields();
     }
 

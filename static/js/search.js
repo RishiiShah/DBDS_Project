@@ -1,27 +1,16 @@
 /**
- * search.js — Dynamic filters, live search, and sort toggle
+ * search.js — Filter modal toggle; form submits only on explicit button click.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('search-filter-form');
     if (!form) return;
 
-    // ── Live search with debounce ───────────────────────────────────
-    const keywordInput = form.querySelector('input[name="q"]');
-    let debounceTimer = null;
-
-    if (keywordInput) {
-        keywordInput.addEventListener('input', () => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                form.submit();
-            }, 600);
+    // Prevent any accidental implicit submission from Enter key on number inputs
+    // (Enter on the text search input is intentional and fine — browsers submit normally)
+    form.querySelectorAll('input[type="number"]').forEach(input => {
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') e.preventDefault();
         });
-    }
-
-    // ── Auto-submit on filter change ────────────────────────────────
-    const autoSubmitFields = form.querySelectorAll('select');
-    autoSubmitFields.forEach(field => {
-        field.addEventListener('change', () => form.submit());
     });
 });

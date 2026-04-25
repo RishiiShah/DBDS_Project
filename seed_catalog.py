@@ -102,133 +102,133 @@ CATEGORY_TREE = [
         "Electronics",
         branch(
             "Computers",
-            leaf("Laptops", ["brand", "ram", "storage", "screen_size", "cpu", "os"]),
-            leaf("Desktops", ["brand", "ram", "storage", "cpu", "gpu", "form_factor"]),
-            leaf("Monitors", ["brand", "size", "resolution", "panel_type", "refresh_rate"]),
+            leaf("Laptops",   ["brand", "ram", "storage"]),
+            leaf("Desktops",  ["brand", "cpu", "gpu"]),
+            leaf("Monitors",  ["brand", "size", "resolution"]),
         ),
         branch(
             "Mobile",
-            leaf("Smartphones", ["brand", "os", "screen_size", "storage", "ram", "battery"]),
-            leaf("Tablets", ["brand", "os", "screen_size", "storage", "ram", "connectivity"]),
-            leaf("Smartwatches", ["brand", "compatibility", "case_size", "battery_life", "connectivity"]),
+            leaf("Smartphones",  ["brand", "storage", "ram"]),
+            leaf("Tablets",      ["brand", "storage", "screen_size"]),
+            leaf("Smartwatches", ["brand", "compatibility", "battery_life"]),
         ),
         branch(
             "Audio",
-            leaf("Headphones", ["brand", "type", "wireless", "noise_cancelling", "color"]),
-            leaf("Speakers", ["brand", "type", "connectivity", "power", "color"]),
+            leaf("Headphones", ["brand", "type", "wireless"]),
+            leaf("Speakers",   ["brand", "type", "connectivity"]),
         ),
         branch(
             "Gaming",
-            leaf("Consoles", ["brand", "model", "storage", "generation", "format"]),
+            leaf("Consoles", ["brand", "model", "storage"]),
         ),
     ),
     root(
         "Sporting Goods",
         branch(
             "Cycling",
-            leaf("Bikes", ["brand", "type", "frame_size", "frame_material", "gears", "wheel_size"]),
+            leaf("Bikes", ["brand", "type", "frame_size"]),
         ),
         branch(
             "Fitness",
-            leaf("Cardio Equipment", ["brand", "type", "max_user_weight", "foldable", "resistance_type"]),
+            leaf("Cardio Equipment", ["brand", "type", "resistance_type"]),
         ),
         branch(
             "Outdoor & Adventure",
-            leaf("Camping Gear", ["brand", "type", "capacity", "material", "season_rating"]),
+            leaf("Camping Gear", ["brand", "type", "season_rating"]),
         ),
         branch(
             "Team Sports",
-            leaf("Basketball", ["brand", "size", "material", "indoor_outdoor"]),
+            leaf("Basketball", ["brand", "size", "indoor_outdoor"]),
         ),
     ),
     root(
         "Home & Kitchen",
         branch(
             "Coffee & Kitchen",
-            leaf("Espresso Machines", ["brand", "type", "capacity", "finish", "power"]),
-            leaf("Stand Mixers", ["brand", "bowl_capacity", "speed_settings", "color", "power"]),
-            leaf("Air Fryers", ["brand", "capacity", "finish", "power", "preset_count"]),
+            leaf("Espresso Machines", ["brand", "type", "capacity"]),
+            leaf("Stand Mixers",      ["brand", "bowl_capacity", "speed_settings"]),
+            leaf("Air Fryers",        ["brand", "capacity", "power"]),
         ),
         branch(
             "Home Care",
-            leaf("Vacuum Cleaners", ["brand", "type", "capacity", "power", "cordless"]),
+            leaf("Vacuum Cleaners", ["brand", "type", "cordless"]),
         ),
     ),
     root(
         "Fashion",
         branch(
             "Footwear",
-            leaf("Sneakers", ["brand", "size", "color", "material", "style"]),
+            leaf("Sneakers", ["brand", "size", "color"]),
         ),
         branch(
             "Accessories",
-            leaf("Watches", ["brand", "movement", "band_material", "case_size", "water_resistance"]),
-            leaf("Handbags", ["brand", "material", "color", "style", "size"]),
+            leaf("Watches",  ["brand", "movement", "band_material"]),
+            leaf("Handbags", ["brand", "material", "color"]),
         ),
         branch(
             "Apparel",
-            leaf("Outerwear", ["brand", "size", "color", "material", "style"]),
+            leaf("Outerwear", ["brand", "size", "material"]),
         ),
     ),
     root(
         "Collectibles",
         branch(
             "Cards",
-            leaf("Trading Cards", ["brand", "franchise", "year", "condition_grade", "set_name"]),
+            leaf("Trading Cards", ["franchise", "year", "condition_grade"]),
         ),
         branch(
             "Comics",
-            leaf("Comic Books", ["publisher", "franchise", "year", "condition_grade", "issue_number"]),
+            leaf("Comic Books", ["publisher", "franchise", "condition_grade"]),
         ),
         branch(
             "Figures",
-            leaf("Action Figures", ["brand", "franchise", "scale", "material", "boxed"]),
+            leaf("Action Figures", ["brand", "franchise", "scale"]),
         ),
         branch(
             "Memorabilia",
-            leaf("Memorabilia", ["franchise", "year", "signed", "material", "display_type"]),
+            leaf("Memorabilia", ["franchise", "year", "signed"]),
         ),
     ),
     root(
         "Books & Media",
         branch(
             "Music",
-            leaf("Vinyl Records", ["artist", "genre", "format", "pressing", "condition_grade"]),
+            leaf("Vinyl Records", ["artist", "genre", "format"]),
         ),
         branch(
             "Games",
-            leaf("Board Games", ["brand", "player_count", "play_time", "genre", "edition"]),
+            leaf("Board Games", ["brand", "player_count", "genre"]),
         ),
         branch(
             "Entertainment",
-            leaf("Box Sets", ["franchise", "format", "edition", "region", "condition_grade"]),
+            leaf("Box Sets", ["franchise", "format", "edition"]),
         ),
     ),
     root(
         "Automotive",
         branch(
             "In-Car Tech",
-            leaf("Car Electronics", ["brand", "compatibility", "power", "connectivity", "condition_grade"]),
+            leaf("Car Electronics", ["brand", "compatibility", "connectivity"]),
         ),
         branch(
             "Detailing",
-            leaf("Detailing Tools", ["brand", "type", "power", "material", "condition_grade"]),
+            leaf("Detailing Tools", ["brand", "type", "power"]),
         ),
         branch(
             "Garage",
-            leaf("Garage Equipment", ["brand", "type", "capacity", "material", "condition_grade"]),
+            leaf("Garage Equipment", ["brand", "type", "capacity"]),
         ),
     ),
     root(
         "Office & Creative",
         branch(
             "Workspace",
-            leaf("Desks", ["brand", "width", "material", "color", "adjustable"]),
-            leaf("Office Chairs", ["brand", "material", "color", "adjustable", "weight_capacity"]),
+            leaf("Desks",         ["brand", "width", "material"]),
+            leaf("Office Chairs", ["brand", "material", "adjustable"]),
         ),
         branch(
             "Imaging",
-            leaf("Cameras", ["brand", "sensor", "lens_mount", "resolution", "condition_grade"]),
+            leaf("Cameras", ["brand", "sensor", "resolution"]),
         ),
     ),
 ]

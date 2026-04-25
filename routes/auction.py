@@ -108,7 +108,7 @@ def create_auction():
     image_file = request.files.get('image')
 
     if not category_id:
-        flash('Please select a category.', 'error')
+        flash('Please select a subcategory.', 'error')
         return render_template(
             'auction/create.html',
             root_categories=root_categories,

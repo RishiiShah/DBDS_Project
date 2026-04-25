@@ -17,78 +17,11 @@
     </div>
 
     <div class="browse-layout">
+
+      <!-- Sidebar: categories only -->
       <aside class="sidebar">
-        <form method="GET" action="{{ url_for('search.browse') }}" id="search-filter-form" class="sidebar-card filter-form">
-          <h3>Filters</h3>
-
-          {% if selected_category %}
-            <input type="hidden" name="category_id" value="{{ selected_category.id }}">
-          {% endif %}
-
-          <div>
-            <label class="filter-label">Keyword</label>
-            <input type="text" name="q" value="{{ q or '' }}" placeholder="Search items..." class="filter-input">
-          </div>
-
-          <div class="filter-row">
-            <div>
-              <label class="filter-label">Min $</label>
-              <input type="number" name="min_price" value="{{ min_price or '' }}" min="0" step="0.01" class="filter-input">
-            </div>
-            <div>
-              <label class="filter-label">Max $</label>
-              <input type="number" name="max_price" value="{{ max_price or '' }}" min="0" step="0.01" class="filter-input">
-            </div>
-          </div>
-
-          <div>
-            <label class="filter-label">Condition</label>
-            <select name="condition" class="filter-select">
-              <option value="">Any Condition</option>
-              <option value="new" {% if condition == 'new' %}selected{% endif %}>New</option>
-              <option value="like_new" {% if condition == 'like_new' %}selected{% endif %}>Like New</option>
-              <option value="good" {% if condition == 'good' %}selected{% endif %}>Good</option>
-              <option value="fair" {% if condition == 'fair' %}selected{% endif %}>Fair</option>
-              <option value="poor" {% if condition == 'poor' %}selected{% endif %}>Poor</option>
-            </select>
-          </div>
-
-          {% if available_attribute_fields %}
-            <div class="dynamic-filter-grid">
-              {% for field in available_attribute_fields %}
-                <div>
-                  <label class="filter-label">{{ field.replace('_', ' ')|title }}</label>
-                  <input
-                    type="text"
-                    name="attr_{{ field }}"
-                    value="{{ attribute_filters.get(field, '') }}"
-                    class="filter-input"
-                  >
-                </div>
-              {% endfor %}
-            </div>
-          {% endif %}
-
-          <div>
-            <label class="filter-label">Sort By</label>
-            <select name="sort" class="filter-select">
-              <option value="ending_soon" {% if sort == 'ending_soon' %}selected{% endif %}>Ending Soon</option>
-              <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest</option>
-              <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
-              <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
-            </select>
-          </div>
-
-          <button type="submit" class="btn btn-primary btn-full">Apply Filters</button>
-          {% if has_active_filters %}
-            <a href="{% if selected_category %}{{ url_for('search.browse_category', category_id=selected_category.id) }}{% else %}{{ url_for('search.browse') }}{% endif %}" class="btn btn-ghost btn-full">
-              Clear Filters
-            </a>
-          {% endif %}
-        </form>
-
-        <div class="sidebar-card">
-          <h3>Categories</h3>
+        <div class="sidebar-card sidebar-combined">
+          <div class="sidebar-categories-header">Categories</div>
           <div class="sidebar-accordion">
             {% for cat in categories %}
               {% set children = category_children.get(cat.id, []) %}
@@ -112,7 +45,113 @@
         </div>
       </aside>
 
+      <!-- Results column -->
       <section>
+
+        <!-- Single form wraps both toolbar and modal so all inputs submit together -->
+        <!-- No category_id here — search and filters are always global -->
+        <form method="GET" action="{{ url_for('search.browse') }}" id="search-filter-form">
+
+          <!-- Toolbar: search bar + filter icon -->
+          <div class="browse-toolbar">
+            <div class="browse-search-wrap">
+              <svg class="browse-search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input type="text" name="q" id="search-q-input" value="{{ q or '' }}" placeholder="Search auctions..." class="browse-search-input">
+              <button type="submit" class="btn btn-primary browse-search-btn">Search</button>
+            </div>
+
+            <button type="button" id="filter-toggle-btn" class="filter-toggle-btn {% if has_active_filters %}filter-toggle-active{% endif %}" title="Open filters">
+              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
+              </svg>
+              Filters
+              {% if has_active_filters %}<span class="filter-count-badge">{{ active_filter_count }}</span>{% endif %}
+            </button>
+
+            {% if has_active_filters %}
+              <a href="{{ url_for('search.browse') }}" class="filter-clear-btn" title="Clear all filters">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+                Clear filters
+              </a>
+            {% endif %}
+          </div>
+
+          <!-- Filter modal (fixed overlay, but inside the form so inputs submit) -->
+          <div id="filter-modal-overlay" class="filter-modal-overlay" hidden>
+            <div class="filter-modal" role="dialog" aria-modal="true" aria-labelledby="filter-modal-title">
+
+              <div class="filter-modal-header">
+                <h3 id="filter-modal-title">Filters</h3>
+                <button type="button" id="filter-modal-close" class="filter-modal-close" aria-label="Close filters">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="filter-modal-body">
+                <div class="filter-row">
+                  <div>
+                    <label class="filter-label">Min $</label>
+                    <input type="number" name="min_price" value="{{ min_price or '' }}" min="0" step="0.01" class="filter-input">
+                  </div>
+                  <div>
+                    <label class="filter-label">Max $</label>
+                    <input type="number" name="max_price" value="{{ max_price or '' }}" min="0" step="0.01" class="filter-input">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="filter-label">Condition</label>
+                  <select name="condition" class="filter-select">
+                    <option value="">Any Condition</option>
+                    <option value="new" {% if condition == 'new' %}selected{% endif %}>New</option>
+                    <option value="like_new" {% if condition == 'like_new' %}selected{% endif %}>Like New</option>
+                    <option value="good" {% if condition == 'good' %}selected{% endif %}>Good</option>
+                    <option value="fair" {% if condition == 'fair' %}selected{% endif %}>Fair</option>
+                    <option value="poor" {% if condition == 'poor' %}selected{% endif %}>Poor</option>
+                  </select>
+                </div>
+
+                {% if available_attribute_fields %}
+                  <div class="dynamic-filter-grid">
+                    {% for field in available_attribute_fields %}
+                      <div>
+                        <label class="filter-label">{{ field.replace('_', ' ')|title }}</label>
+                        <input
+                          type="text"
+                          name="attr_{{ field }}"
+                          value="{{ attribute_filters.get(field, '') }}"
+                          class="filter-input"
+                        >
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+
+                <div>
+                  <label class="filter-label">Sort By</label>
+                  <select name="sort" class="filter-select">
+                    <option value="ending_soon" {% if sort == 'ending_soon' %}selected{% endif %}>Ending Soon</option>
+                    <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest</option>
+                    <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+                    <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="filter-modal-footer">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+              </div>
+
+            </div>
+          </div>
+        </form>
+
         {% if auctions | length == 0 %}
           <div class="empty-state">
             <div class="empty-state-icon">🔍</div>
@@ -129,6 +168,7 @@
             {% endfor %}
           </div>
         {% endif %}
+
       </section>
     </div>
   </div>
@@ -137,4 +177,56 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/search.js') }}"></script>
+<script>
+(function () {
+  const toggleBtn = document.getElementById('filter-toggle-btn');
+  const overlay   = document.getElementById('filter-modal-overlay');
+  const closeBtn  = document.getElementById('filter-modal-close');
+
+  function syncModalFromURL() {
+    const params = new URLSearchParams(window.location.search);
+
+    const fields = ['min_price', 'max_price', 'condition', 'sort'];
+    fields.forEach(function (name) {
+      const el = overlay.querySelector('[name="' + name + '"]');
+      if (!el) return;
+      if (params.has(name)) {
+        el.value = params.get(name);
+      } else if (name === 'sort') {
+        el.value = 'ending_soon';
+      } else {
+        el.value = '';
+      }
+    });
+
+    overlay.querySelectorAll('[name^="attr_"]').forEach(function (el) {
+      el.value = params.has(el.name) ? params.get(el.name) : '';
+    });
+  }
+
+  function openModal() {
+    syncModalFromURL();
+    overlay.hidden = false;
+    document.body.style.overflow = 'hidden';
+    closeBtn.focus();
+  }
+
+  function closeModal() {
+    overlay.hidden = true;
+    document.body.style.overflow = '';
+    toggleBtn.focus();
+  }
+
+  toggleBtn.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+
+  overlay.addEventListener('click', function (e) {
+    if (e.target === overlay) closeModal();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !overlay.hidden) closeModal();
+  });
+})();
+</script>
 {% endblock %}
