@@ -46,7 +46,7 @@ python seed.py
 python app.py
 ```
 
-Open **http://127.0.0.1:5000** in your browser.
+Open **http://127.0.0.1:5001** in your browser.
 
 > **Re-seeding:** If you need a clean slate, delete `instance/buyme.db` (or `buyme.db`) then re-run `python seed.py`. The seeder is safe to re-run — each block is guarded and skips data that already exists.
 
@@ -70,13 +70,14 @@ Open **http://127.0.0.1:5000** in your browser.
 
 ### Regular Users
 - Register, log in, manage profile (edit info, delete account)
-- Browse active auctions by category (Electronics & Sporting Goods hierarchy)
-- Search auctions by keyword, category, price range, condition, and sort order
+- Browse active auctions by category across multiple item families, with electronics seeded most heavily
+- Filter auctions by keyword, category, price range, condition, sort order, and category-specific item fields
 - Place manual bids with real-time minimum enforcement
 - Auto-bid (proxy bidding): set an upper limit — system bids automatically to keep you in the lead; current limit and status shown on the auction page; cancel or update anytime; parallel auto-bid competition resolves instantly when two auto-bids meet
 - Create auction listings with category-specific attributes, Flatpickr date picker, and price tooltips
 - View similar auctions on each auction detail page (scored by category, price, and attributes)
 - Wishlist / keyword watches: get alerted when a matching auction is listed
+- Wishlist / keyword watches can also include category-specific attribute filters
 - Alert inbox: outbid, auction won/lost, auto-bid exceeded, item available, auction cancelled, bid removed
 - Support Q&A: submit questions to customer reps, view rep replies, search answered questions
 
@@ -130,6 +131,10 @@ Sporting Goods
 ```
 
 Each leaf category stores its required fields as JSON — **adding a new category never requires code changes** (bonus feature).
+
+## ER Diagram
+
+- See [docs/ER_DIAGRAM.md](docs/ER_DIAGRAM.md) for the current project ER diagram.
 
 ---
 
