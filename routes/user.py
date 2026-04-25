@@ -16,6 +16,21 @@ from models.item import Category
 user_bp = Blueprint('user', __name__)
 
 
+def _leaf_categories():
+    return Category.query.filter(~Category.children.any()).order_by(Category.name.asc()).all()
+
+
+def _leaf_category_payload():
+    return [
+        {
+            'id': category.id,
+            'name': category.name,
+            'required_fields': category.required_fields or [],
+        }
+        for category in _leaf_categories()
+    ]
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 #  PROFILE
 # ═══════════════════════════════════════════════════════════════════════════
@@ -149,17 +164,30 @@ def public_auctions(id):
     from models.user import User
     user = User.query.get_or_404(id)
 
-    auctions = (
+    selling = (
         Auction.query
         .options(joinedload(Auction.item))
         .filter_by(seller_id=id)
         .order_by(Auction.created_at.desc())
         .all()
     )
+    bidding_ids = (
+        db.session.query(Bid.auction_id)
+        .filter_by(bidder_id=id)
+        .distinct()
+        .subquery()
+    )
+    participated = (
+        Auction.query
+        .options(joinedload(Auction.item))
+        .filter(Auction.id.in_(db.session.query(bidding_ids)))
+        .order_by(Auction.end_time.desc(), Auction.created_at.desc())
+        .all()
+    )
     return render_template(
         'user/my_auctions.html',
-        selling=auctions,
-        bidding=[],
+        selling=selling,
+        bidding=participated,
         won=[],
         lost=[],
         public_user=user,
@@ -222,8 +250,12 @@ def wishlist():
         .order_by(ItemWatch.created_at.desc())
         .all()
     )
-    categories = Category.query.order_by(Category.name).all()
-    return render_template('user/wishlist.html', watches=watches, categories=categories)
+    return render_template(
+        'user/wishlist.html',
+        watches=watches,
+        categories=_leaf_categories(),
+        leaf_categories=_leaf_category_payload(),
+    )
 
 
 @user_bp.route('/wishlist/create', methods=['POST'])
@@ -234,6 +266,11 @@ def wishlist_create():
     category_id = request.form.get('category_id', type=int) or None
     min_price = request.form.get('min_price', type=float) or None
     max_price = request.form.get('max_price', type=float) or None
+    attribute_filters = {
+        key.removeprefix('attr_'): value.strip()
+        for key, value in request.form.items()
+        if key.startswith('attr_') and value.strip()
+    }
 
     if not keyword:
         flash('Keyword is required.', 'error')
@@ -245,6 +282,7 @@ def wishlist_create():
         category_id=category_id,
         min_price=min_price,
         max_price=max_price,
+        attributes=attribute_filters or None,
         is_active=True,
     )
     db.session.add(watch)

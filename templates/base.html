@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
-        content="BuyMe — Premium online auction platform for electronics. Buy and sell laptops, phones, audio gear, and gaming equipment.">
+        content="BuyMe — Curated online auctions across tech, home, style, collectibles, and more.">
     <title>{% block title %}BuyMe{% endblock %} — Online Auctions</title>
 
-    <!-- Google Fonts: Inter -->
+    <!-- Google Fonts: Outfit + Inter + JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
 
     <!-- Stylesheet -->
@@ -37,38 +37,67 @@
                 <div class="nav-links">
                     <a href="{{ url_for('main.index') }}" class="nav-link">Home</a>
                     <a href="{{ url_for('search.browse') }}" class="nav-link">Browse</a>
-                    <a href="{{ url_for('search.search') }}" class="nav-link">Search</a>
-                    {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('main.dashboard') }}" class="nav-link">Dashboard</a>
-                    {% if current_user.is_admin %}
-                    <a href="{{ url_for('admin.dashboard') }}" class="nav-link">Admin</a>
-                    {% endif %}
-                    {% if current_user.is_rep or current_user.is_admin %}
-                    <a href="{{ url_for('rep.dashboard') }}" class="nav-link">Rep Panel</a>
-                    {% endif %}
-                    <a href="{{ url_for('user.my_auctions') }}" class="nav-link">My Auctions</a>
-                    <a href="{{ url_for('user.alerts') }}" class="nav-link" id="alerts-nav-link">Alerts <span
-                            id="unread-badge"
-                            style="display:none;background:var(--primary);color:#fff;font-size:.7rem;padding:.1rem .4rem;border-radius:10px;margin-left:.25rem;"></span></a>
-                    <a href="{{ url_for('user.wishlist') }}" class="nav-link">Wishlist</a>
-                    <a href="{{ url_for('support.my_questions') }}" class="nav-link">Support</a>
-                    {% endif %}
                 </div>
 
                 <div class="nav-actions">
                     {% if current_user.is_authenticated %}
-                    <div class="nav-user">
-                        <span class="nav-user-avatar">{{ current_user.first_name[0] }}{{ current_user.last_name[0]
-                            }}</span>
-                        <span class="nav-user-name">{{ current_user.first_name }}</span>
-                        {% if current_user.is_admin %}
-                        <span class="role-badge role-admin">Admin</span>
-                        {% elif current_user.is_rep %}
-                        <span class="role-badge role-rep">Rep</span>
-                        {% endif %}
+                    <!-- Alerts bell -->
+                    <a href="{{ url_for('user.alerts') }}" class="nav-alert-btn" id="alerts-nav-link" title="Alerts">
+                        🔔
+                        <span class="nav-alert-badge hidden" id="unread-badge"></span>
+                    </a>
+
+                    <!-- User dropdown -->
+                    <div class="nav-dropdown" id="nav-dropdown">
+                        <button class="nav-dropdown-trigger" id="dropdown-trigger" type="button">
+                            <span class="nav-user-avatar">{{ current_user.first_name[0] }}{{ current_user.last_name[0] }}</span>
+                            <span class="nav-user-name">{{ current_user.first_name }}</span>
+                            {% if current_user.is_admin %}
+                            <span class="role-badge role-admin">Admin</span>
+                            {% elif current_user.is_rep %}
+                            <span class="role-badge role-rep">Rep</span>
+                            {% endif %}
+                            <span class="dropdown-arrow">▾</span>
+                        </button>
+                        <div class="nav-dropdown-menu" id="nav-dropdown-menu">
+                            <div class="dropdown-section-header">My Account</div>
+                            <a href="{{ url_for('main.dashboard') }}" class="dropdown-item">
+                                <span class="dropdown-item-icon">📊</span> Dashboard
+                            </a>
+                            <a href="{{ url_for('user.my_auctions') }}" class="dropdown-item">
+                                <span class="dropdown-item-icon">🏷</span> My Auctions
+                            </a>
+                            <a href="{{ url_for('user.wishlist') }}" class="dropdown-item">
+                                <span class="dropdown-item-icon">❤</span> Wishlist
+                            </a>
+                            <a href="{{ url_for('support.my_questions') }}" class="dropdown-item">
+                                <span class="dropdown-item-icon">💬</span> Support
+                            </a>
+                            {% if current_user.is_admin %}
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-section-header">Management</div>
+                            <a href="{{ url_for('admin.dashboard') }}" class="dropdown-item">
+                                <span class="dropdown-item-icon">⚙</span> Admin Panel
+                            </a>
+                            <a href="{{ url_for('rep.dashboard') }}" class="dropdown-item">
+                                <span class="dropdown-item-icon">👥</span> Rep Panel
+                            </a>
+                            {% elif current_user.is_rep %}
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-section-header">Management</div>
+                            <a href="{{ url_for('rep.dashboard') }}" class="dropdown-item">
+                                <span class="dropdown-item-icon">👥</span> Rep Panel
+                            </a>
+                            {% endif %}
+                            <div class="dropdown-divider"></div>
+                            <a href="{{ url_for('user.profile') }}" class="dropdown-item">
+                                <span class="dropdown-item-icon">👤</span> Profile
+                            </a>
+                            <a href="{{ url_for('auth.logout') }}" class="dropdown-item danger">
+                                <span class="dropdown-item-icon">↩</span> Sign Out
+                            </a>
+                        </div>
                     </div>
-                    <a href="{{ url_for('user.profile') }}" class="btn btn-ghost btn-sm">Profile</a>
-                    <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-sm">Logout</a>
                     {% else %}
                     <a href="{{ url_for('auth.login') }}" class="btn btn-ghost btn-sm">Log In</a>
                     <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Sign Up</a>
@@ -107,12 +136,14 @@
             <div class="footer-brand">
                 <span class="logo-icon">⚡</span>
                 <span class="logo-text">Buy<span class="logo-accent">Me</span></span>
-                <p class="footer-tagline">Premium Electronics Auctions</p>
+                <p class="footer-tagline">Curated auctions across tech, home, style, and collectibles.</p>
             </div>
             <div class="footer-links">
                 <a href="{{ url_for('main.index') }}">Home</a>
+                <a href="{{ url_for('search.browse') }}">Browse</a>
                 {% if current_user.is_authenticated %}
                 <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('support.my_questions') }}">Support</a>
                 {% endif %}
             </div>
             <p class="footer-copy">&copy; 2026 BuyMe. CS 527 Database Systems Project.</p>
@@ -131,9 +162,9 @@
                         const badge = document.getElementById('unread-badge');
                         if (badge && data.count > 0) {
                             badge.textContent = data.count;
-                            badge.style.display = 'inline';
+                            badge.classList.remove('hidden');
                         } else if (badge) {
-                            badge.style.display = 'none';
+                            badge.classList.add('hidden');
                         }
                     })
                     .catch(() => { });

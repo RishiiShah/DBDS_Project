@@ -2,79 +2,62 @@
 {% block title %}Alerts{% endblock %}
 
 {% block content %}
-<div class="container" style="padding:2rem 1rem;max-width:800px;margin:auto;">
-
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
-        <h1 class="page-title" style="font-size:2rem;font-weight:800;margin:0;">Alerts</h1>
+<section class="page-section">
+  <div class="page-container narrow">
+    <div class="page-header">
+      <h1>Alerts</h1>
     </div>
 
     {% if pagination.items | length == 0 %}
-    <div class="card"
-        style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:3rem;text-align:center;">
-        <p style="color:var(--text-muted);font-size:1.1rem;">No notifications yet.</p>
-    </div>
+      <div class="empty-state">
+        <div class="empty-state-icon">🔔</div>
+        <p>No notifications yet.</p>
+      </div>
     {% else %}
-    <div style="display:flex;flex-direction:column;gap:.75rem;">
+      <div class="alert-list">
         {% for alert in pagination.items %}
-        <div class="card"
-            style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;display:flex;align-items:flex-start;gap:1rem;opacity:{% if alert.is_read %}0.6{% else %}1{% endif %};">
-            {# Icon #}
-            <div style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;
-                    {% if alert.alert_type == 'outbid' %}background:#f59e0b22;color:#f59e0b;
-                    {% elif alert.alert_type == 'auction_won' %}background:#22c55e22;color:#22c55e;
-                    {% elif alert.alert_type == 'auction_lost' %}background:#ef444422;color:#ef4444;
-                    {% elif alert.alert_type == 'item_available' %}background:#3b82f622;color:#3b82f6;
-                    {% elif alert.alert_type == 'auto_bid_exceeded' %}background:#a855f722;color:#a855f7;
-                    {% else %}background:#6b728022;color:#6b7280;{% endif %}">
-                {% if alert.alert_type == 'outbid' %}⚠
-                {% elif alert.alert_type == 'auction_won' %}🏆
-                {% elif alert.alert_type == 'auction_lost' %}✕
-                {% elif alert.alert_type == 'item_available' %}🔔
-                {% elif alert.alert_type == 'auto_bid_exceeded' %}⚡
-                {% else %}ℹ{% endif %}
+          <div class="alert-item {% if alert.is_read %}read{% endif %}">
+            <div class="alert-icon {% if alert.alert_type == 'outbid' %}alert-icon-outbid{% elif alert.alert_type == 'auction_won' %}alert-icon-won{% elif alert.alert_type == 'auction_lost' %}alert-icon-lost{% elif alert.alert_type == 'item_available' %}alert-icon-available{% elif alert.alert_type == 'auto_bid_exceeded' %}alert-icon-auto{% else %}alert-icon-info{% endif %}">
+              {% if alert.alert_type == 'outbid' %}⚠
+              {% elif alert.alert_type == 'auction_won' %}🏆
+              {% elif alert.alert_type == 'auction_lost' %}✕
+              {% elif alert.alert_type == 'item_available' %}🔔
+              {% elif alert.alert_type == 'auto_bid_exceeded' %}⚡
+              {% else %}ℹ{% endif %}
             </div>
 
-            {# Content #}
-            <div style="flex:1;min-width:0;">
-                <p style="margin:0 0 .25rem;color:var(--text);font-size:.95rem;">{{ alert.message }}</p>
-                <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;">
-                    <span style="font-size:.8rem;color:var(--text-muted);">{{ alert.created_at.strftime('%b %d, %Y at
-                        %H:%M') }}</span>
-                    <span
-                        style="font-size:.75rem;padding:.1rem .4rem;border-radius:4px;background:var(--border);color:var(--text-muted);">{{
-                        alert.alert_type | replace('_',' ') | title }}</span>
-                    {% if alert.auction_id %}
-                    <a href="{{ url_for('auction.auction_detail', id=alert.auction_id) }}"
-                        style="font-size:.8rem;color:var(--primary);text-decoration:none;">View Auction →</a>
-                    {% endif %}
-                </div>
+            <div class="alert-content">
+              <p>{{ alert.message }}</p>
+              <div class="alert-meta">
+                <span>{{ alert.created_at.strftime('%b %d, %Y at %H:%M') }}</span>
+                <span class="chip chip-muted">{{ alert.alert_type | replace('_',' ') | title }}</span>
+                {% if alert.auction_id %}
+                  <a href="{{ url_for('auction.auction_detail', id=alert.auction_id) }}">View Auction →</a>
+                {% endif %}
+              </div>
             </div>
 
-            {# Mark as read #}
             {% if not alert.is_read %}
-            <form method="POST" action="{{ url_for('user.mark_alert_read', id=alert.id) }}" style="flex-shrink:0;">
-                <button type="submit" class="btn btn-ghost btn-sm" title="Mark as read" style="font-size:.8rem;">✓
-                    Read</button>
-            </form>
+              <form method="POST" action="{{ url_for('user.mark_alert_read', id=alert.id) }}">
+                <button type="submit" class="btn btn-ghost btn-sm">✓ Read</button>
+              </form>
             {% endif %}
-        </div>
+          </div>
         {% endfor %}
-    </div>
+      </div>
 
-    {# ── Pagination ─────────────────────────────────────── #}
-    {% if pagination.pages > 1 %}
-    <div style="display:flex;justify-content:center;gap:.5rem;margin-top:1.5rem;">
-        {% if pagination.has_prev %}
-        <a href="{{ url_for('user.alerts', page=pagination.prev_num) }}" class="btn btn-ghost btn-sm">← Prev</a>
-        {% endif %}
-        <span style="padding:.4rem .75rem;font-size:.9rem;color:var(--text-muted);">
-            Page {{ pagination.page }} of {{ pagination.pages }}
-        </span>
-        {% if pagination.has_next %}
-        <a href="{{ url_for('user.alerts', page=pagination.next_num) }}" class="btn btn-ghost btn-sm">Next →</a>
-        {% endif %}
-    </div>
+      {% if pagination.pages > 1 %}
+        <div class="pagination">
+          {% if pagination.has_prev %}
+            <a href="{{ url_for('user.alerts', page=pagination.prev_num) }}" class="btn btn-ghost btn-sm">← Prev</a>
+          {% endif %}
+          <span class="results-count">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+          {% if pagination.has_next %}
+            <a href="{{ url_for('user.alerts', page=pagination.next_num) }}" class="btn btn-ghost btn-sm">Next →</a>
+          {% endif %}
+        </div>
+      {% endif %}
     {% endif %}
-    {% endif %}
-</div>
+  </div>
+</section>
 {% endblock %}

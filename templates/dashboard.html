@@ -2,115 +2,80 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width:900px;margin:2rem auto;padding:0 1rem;">
+<section class="page-section">
+  <div class="page-container">
 
-  <div style="margin-bottom:2rem;">
-    <h1 style="font-size:1.8rem;font-weight:700;">
-      Welcome back, <span style="color:var(--primary);">{{ current_user.first_name }}</span>
-    </h1>
-    <p style="color:var(--text-muted);">{{ current_user.email }} ·
-      <span class="role-badge role-{{ current_user.role }}">{{ current_user.role | capitalize }}</span>
-    </p>
-  </div>
-
-  {# ── Stats grid ─────────────────────────────────────────────── #}
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:2rem;">
-
-    <a href="{{ url_for('user.my_auctions') }}" style="text-decoration:none;">
-      <div class="card" style="padding:1.25rem;text-align:center;transition:border-color .15s;"
-           onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
-        <div style="font-size:2rem;font-weight:700;color:var(--primary);">{{ active_listings }}</div>
-        <div style="color:var(--text-muted);font-size:.875rem;">Active Listings</div>
-      </div>
-    </a>
-
-    <a href="{{ url_for('user.my_auctions') }}" style="text-decoration:none;">
-      <div class="card" style="padding:1.25rem;text-align:center;transition:border-color .15s;"
-           onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
-        <div style="font-size:2rem;font-weight:700;color:var(--primary);">{{ active_bids }}</div>
-        <div style="color:var(--text-muted);font-size:.875rem;">Active Bids</div>
-      </div>
-    </a>
-
-    <a href="{{ url_for('user.alerts') }}" style="text-decoration:none;">
-      <div class="card" style="padding:1.25rem;text-align:center;transition:border-color .15s;"
-           onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
-        <div style="font-size:2rem;font-weight:700;color:{% if unread_alerts > 0 %}#f87171{% else %}var(--primary){% endif %};">
-          {{ unread_alerts }}
-        </div>
-        <div style="color:var(--text-muted);font-size:.875rem;">Unread Alerts</div>
-      </div>
-    </a>
-
-    <a href="{{ url_for('user.my_auctions') }}" style="text-decoration:none;">
-      <div class="card" style="padding:1.25rem;text-align:center;transition:border-color .15s;"
-           onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
-        <div style="font-size:2rem;font-weight:700;color:var(--primary);">{{ won_auctions }}</div>
-        <div style="color:var(--text-muted);font-size:.875rem;">Auctions Won</div>
-      </div>
-    </a>
-
-  </div>
-
-  {# ── Quick actions ───────────────────────────────────────────── #}
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:2rem;">
-
-    <a href="{{ url_for('auction.create_auction') }}" class="card"
-       style="padding:1.25rem;text-decoration:none;display:block;transition:border-color .15s;"
-       onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
-      <div style="font-size:1.4rem;margin-bottom:.4rem;">🏷️</div>
-      <div style="font-weight:600;">Sell an Item</div>
-      <div style="color:var(--text-muted);font-size:.85rem;margin-top:.2rem;">Create a new auction listing.</div>
-    </a>
-
-    <a href="{{ url_for('auction.list_auctions') }}" class="card"
-       style="padding:1.25rem;text-decoration:none;display:block;transition:border-color .15s;"
-       onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
-      <div style="font-size:1.4rem;margin-bottom:.4rem;">🔨</div>
-      <div style="font-weight:600;">Browse Auctions</div>
-      <div style="color:var(--text-muted);font-size:.85rem;margin-top:.2rem;">Find items to bid on.</div>
-    </a>
-
-    <a href="{{ url_for('user.wishlist') }}" class="card"
-       style="padding:1.25rem;text-decoration:none;display:block;transition:border-color .15s;"
-       onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
-      <div style="font-size:1.4rem;margin-bottom:.4rem;">⭐</div>
-      <div style="font-weight:600;">My Wishlist</div>
-      <div style="color:var(--text-muted);font-size:.85rem;margin-top:.2rem;">Manage item watches and alerts.</div>
-    </a>
-
-    <a href="{{ url_for('support.ask') }}" class="card"
-       style="padding:1.25rem;text-decoration:none;display:block;transition:border-color .15s;"
-       onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
-      <div style="font-size:1.4rem;margin-bottom:.4rem;">💬</div>
-      <div style="font-weight:600;">Get Support</div>
-      <div style="color:var(--text-muted);font-size:.85rem;margin-top:.2rem;">Ask a customer representative.</div>
-    </a>
-
-  </div>
-
-  {# ── Staff panels ────────────────────────────────────────────── #}
-  {% if current_user.is_admin %}
-  <div class="card" style="padding:1.5rem;margin-bottom:1rem;">
-    <h2 style="font-size:1.1rem;font-weight:600;margin-bottom:1rem;">Admin</h2>
-    <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
-      <a href="{{ url_for('admin.create_rep') }}" class="btn btn-primary">Create Rep Account</a>
-      <a href="{{ url_for('admin.reports') }}" class="btn btn-ghost">Sales Reports</a>
-      <a href="{{ url_for('rep.dashboard') }}" class="btn btn-ghost">Rep Panel</a>
+    <div class="page-header">
+      <h1>Welcome back, <span class="gradient-text">{{ current_user.first_name }}</span></h1>
+      <p>{{ current_user.email }} &nbsp;·&nbsp;
+        <span class="role-badge role-{{ current_user.role }}">{{ current_user.role | capitalize }}</span>
+      </p>
     </div>
-  </div>
-  {% endif %}
 
-  {% if current_user.is_rep %}
-  <div class="card" style="padding:1.5rem;">
-    <h2 style="font-size:1.1rem;font-weight:600;margin-bottom:1rem;">Rep Panel</h2>
-    <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
-      <a href="{{ url_for('support.questions') }}" class="btn btn-primary">Open Questions</a>
-      <a href="{{ url_for('rep.users') }}" class="btn btn-ghost">Manage Users</a>
-      <a href="{{ url_for('rep.auctions') }}" class="btn btn-ghost">Manage Auctions</a>
+    <div class="stats-grid">
+      <a href="{{ url_for('user.my_auctions') }}" class="stat-card">
+        <div class="stat-card-value">{{ active_listings }}</div>
+        <div class="stat-card-label">Active Listings</div>
+      </a>
+      <a href="{{ url_for('user.my_auctions') }}" class="stat-card">
+        <div class="stat-card-value">{{ active_bids }}</div>
+        <div class="stat-card-label">Active Bids</div>
+      </a>
+      <a href="{{ url_for('user.alerts') }}" class="stat-card">
+        <div class="stat-card-value {% if unread_alerts > 0 %}alert-value{% endif %}">{{ unread_alerts }}</div>
+        <div class="stat-card-label">Unread Alerts</div>
+      </a>
+      <a href="{{ url_for('user.my_auctions') }}" class="stat-card">
+        <div class="stat-card-value">{{ won_auctions }}</div>
+        <div class="stat-card-label">Auctions Won</div>
+      </a>
     </div>
-  </div>
-  {% endif %}
 
-</div>
+    <div class="quick-actions-grid">
+      <a href="{{ url_for('auction.create_auction') }}" class="quick-action-card">
+        <div class="quick-action-icon">🏷️</div>
+        <div class="quick-action-title">Sell an Item</div>
+        <div class="quick-action-desc">Create a new auction listing.</div>
+      </a>
+      <a href="{{ url_for('search.browse') }}" class="quick-action-card">
+        <div class="quick-action-icon">🔨</div>
+        <div class="quick-action-title">Browse Auctions</div>
+        <div class="quick-action-desc">Find items to bid on.</div>
+      </a>
+      <a href="{{ url_for('user.wishlist') }}" class="quick-action-card">
+        <div class="quick-action-icon">⭐</div>
+        <div class="quick-action-title">My Wishlist</div>
+        <div class="quick-action-desc">Manage item watches and alerts.</div>
+      </a>
+      <a href="{{ url_for('support.ask') }}" class="quick-action-card">
+        <div class="quick-action-icon">💬</div>
+        <div class="quick-action-title">Get Support</div>
+        <div class="quick-action-desc">Ask a customer representative.</div>
+      </a>
+    </div>
+
+    {% if current_user.is_admin %}
+    <div class="panel-card">
+      <h2>Admin Controls</h2>
+      <div class="panel-actions">
+        <a href="{{ url_for('admin.create_rep') }}" class="btn btn-primary">Create Rep Account</a>
+        <a href="{{ url_for('admin.reports') }}" class="btn btn-outline">Sales Reports</a>
+        <a href="{{ url_for('rep.dashboard') }}" class="btn btn-ghost">Rep Panel</a>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if current_user.is_rep and not current_user.is_admin %}
+    <div class="panel-card">
+      <h2>Rep Panel</h2>
+      <div class="panel-actions">
+        <a href="{{ url_for('support.questions') }}" class="btn btn-primary">Open Questions</a>
+        <a href="{{ url_for('rep.users') }}" class="btn btn-outline">Manage Users</a>
+        <a href="{{ url_for('rep.auctions') }}" class="btn btn-ghost">Manage Auctions</a>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
 {% endblock %}

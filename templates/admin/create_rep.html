@@ -2,49 +2,58 @@
 {% block title %}Create Rep Account{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width:480px;margin:3rem auto;padding:0 1rem;">
+<section class="auth-section">
+  <div class="auth-container auth-container-wide">
+    <div class="auth-card auth-card-wide">
+      <a href="{{ url_for('admin.dashboard') }}" class="back-link">← Back to Admin</a>
 
-  <div style="margin-bottom:1.5rem;">
-    <a href="{{ url_for('admin.dashboard') }}" style="color:var(--text-muted);font-size:.875rem;">← Back to Admin</a>
-    <h1 style="font-size:1.5rem;font-weight:700;margin-top:.75rem;">Create Customer Rep</h1>
-  </div>
+      <div class="auth-header">
+        <h1>Create Rep Account</h1>
+        <p>Add a new customer representative to the platform.</p>
+      </div>
 
-  <div class="card" style="padding:1.75rem;">
-    <form method="POST">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
-        <div>
-          <label style="display:block;font-size:.875rem;font-weight:500;margin-bottom:.4rem;">First Name</label>
-          <input type="text" name="first_name" value="{{ first_name or '' }}" required
-            style="width:100%;padding:.6rem .75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);box-sizing:border-box;">
+      <form method="POST" class="auth-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            <input type="text" name="first_name" value="{{ first_name or '' }}" required class="form-input" placeholder="First name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            <input type="text" name="last_name" value="{{ last_name or '' }}" required class="form-input" placeholder="Last name">
+          </div>
         </div>
-        <div>
-          <label style="display:block;font-size:.875rem;font-weight:500;margin-bottom:.4rem;">Last Name</label>
-          <input type="text" name="last_name" value="{{ last_name or '' }}" required
-            style="width:100%;padding:.6rem .75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);box-sizing:border-box;">
+
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <div class="input-wrapper">
+            <span class="input-icon">👤</span>
+            <input type="text" name="username" value="{{ username or '' }}" required class="form-input" placeholder="Choose a username">
+          </div>
         </div>
-      </div>
 
-      <div style="margin-bottom:1rem;">
-        <label style="display:block;font-size:.875rem;font-weight:500;margin-bottom:.4rem;">Username</label>
-        <input type="text" name="username" value="{{ username or '' }}" required
-          style="width:100%;padding:.6rem .75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);box-sizing:border-box;">
-      </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <div class="input-wrapper">
+            <span class="input-icon">✉</span>
+            <input type="email" name="email" value="{{ email or '' }}" required class="form-input" placeholder="Email address">
+          </div>
+        </div>
 
-      <div style="margin-bottom:1rem;">
-        <label style="display:block;font-size:.875rem;font-weight:500;margin-bottom:.4rem;">Email</label>
-        <input type="email" name="email" value="{{ email or '' }}" required
-          style="width:100%;padding:.6rem .75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);box-sizing:border-box;">
-      </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🔒</span>
+            <input type="password" name="password" required class="form-input" placeholder="Set a password">
+          </div>
+        </div>
 
-      <div style="margin-bottom:1.5rem;">
-        <label style="display:block;font-size:.875rem;font-weight:500;margin-bottom:.4rem;">Password</label>
-        <input type="password" name="password" required
-          style="width:100%;padding:.6rem .75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);box-sizing:border-box;">
-      </div>
-
-      <button type="submit" class="btn btn-primary" style="width:100%;">Create Rep Account</button>
-    </form>
+        <button type="submit" class="btn btn-primary btn-full">
+          Create Rep Account
+          <span class="btn-arrow">→</span>
+        </button>
+      </form>
+    </div>
   </div>
-
-</div>
+</section>
 {% endblock %}

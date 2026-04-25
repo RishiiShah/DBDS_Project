@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "components/auction_card.html" import auction_card %}
 {% block title %}Home{% endblock %}
 
 {% block content %}
@@ -8,45 +9,74 @@
         <div class="shape shape-2"></div>
         <div class="shape shape-3"></div>
     </div>
-    <div class="hero-container">
-        <div class="hero-badge">⚡ Electronics Auctions</div>
-        <h1 class="hero-title">
-            Discover, Bid &amp;
-            <span class="gradient-text">Win</span>
-            Premium Electronics
-        </h1>
-        <p class="hero-subtitle">
-            The smartest way to buy and sell laptops, phones, audio gear, and gaming equipment.
-            Set your price, let automatic bidding do the work.
-        </p>
-        <div class="hero-actions">
-            {% if current_user.is_authenticated %}
-                <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">
-                    Go to Dashboard
-                    <span class="btn-arrow">→</span>
-                </a>
-            {% else %}
-                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
-                    Get Started Free
-                    <span class="btn-arrow">→</span>
-                </a>
-                <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-lg">
-                    Sign In
-                </a>
-            {% endif %}
+    <div class="hero-container hero-grid">
+        <div class="hero-copy-block">
+            <div class="hero-badge">Online auction system</div>
+            <h1 class="hero-title">
+                <span class="hero-title-line">Bid on standout finds across</span>
+                <span class="hero-title-line"><span class="gradient-text">tech, home, style, and collectibles</span></span>
+            </h1>
+            <p class="hero-subtitle">
+                BuyMe brings live auctions, category browsing with filters, automatic bidding, and support workflows
+                into one cleaner, easier-to-scan marketplace.
+            </p>
+            <div class="hero-actions">
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">
+                        Go to Dashboard
+                        <span class="btn-arrow">→</span>
+                    </a>
+                    <a href="{{ url_for('auction.create_auction') }}" class="btn btn-outline btn-lg">
+                        List an Item
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
+                        Create Account
+                        <span class="btn-arrow">→</span>
+                    </a>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-lg">
+                        Sign In
+                    </a>
+                {% endif %}
+            </div>
+            <div class="hero-stats">
+                <div class="stat">
+                    <span class="stat-value">{{ categories|length }}</span>
+                    <span class="stat-label">Top-level families</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">{{ active_auction_count }}</span>
+                    <span class="stat-label">Live auctions</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">{{ member_count }}</span>
+                    <span class="stat-label">Seeded members</span>
+                </div>
+            </div>
         </div>
-        <div class="hero-stats">
-            <div class="stat">
-                <span class="stat-value">10+</span>
-                <span class="stat-label">Categories</span>
+
+        <div class="hero-market-card">
+            <div class="hero-market-head">
+                <div>
+                    <p class="hero-market-label">Marketplace snapshot</p>
+                    <h2>Expanded catalog</h2>
+                </div>
+                <span class="chip chip-success">Live</span>
             </div>
-            <div class="stat">
-                <span class="stat-value">Auto</span>
-                <span class="stat-label">Bidding</span>
+            <div class="hero-market-list">
+                {% for entry in category_cards[:4] %}
+                <div class="hero-market-item">
+                    <div class="hero-market-item-top">
+                        <strong>{{ entry.category.name }}</strong>
+                        <span>{{ entry.category.children.count() }} groups</span>
+                    </div>
+                    <p>{{ entry.preview }}</p>
+                </div>
+                {% endfor %}
             </div>
-            <div class="stat">
-                <span class="stat-value">24/7</span>
-                <span class="stat-label">Support</span>
+            <div class="hero-market-foot">
+                <span>Browse by category</span>
+                <a href="{{ url_for('search.browse') }}">Open catalog →</a>
             </div>
         </div>
     </div>
@@ -54,27 +84,27 @@
 
 <section class="features-section">
     <div class="section-container">
-        <h2 class="section-title">How BuyMe Works</h2>
+        <h2 class="section-title">Marketplace Flow</h2>
         <div class="features-grid">
             <div class="feature-card">
                 <div class="feature-icon">📋</div>
-                <h3>List Your Item</h3>
-                <p>Create an auction with detailed specs, set your price, and let buyers find you.</p>
+                <h3>Structured Listings</h3>
+                <p>List items with category-aware fields, pricing rules, and timed closing windows.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🔍</div>
-                <h3>Browse &amp; Search</h3>
-                <p>Filter by category, price range, condition, and category-specific attributes.</p>
+                <h3>Browse + Filters</h3>
+                <p>Navigate the catalog with category trees, price filters, condition filters, sorting, and similar-item discovery.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🤖</div>
-                <h3>Auto-Bid</h3>
-                <p>Set your max price and let BuyMe bid automatically — never miss a deal.</p>
+                <h3>Manual + Auto Bid</h3>
+                <p>Bid directly or set a ceiling so the system keeps you competitive without babysitting an auction.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🔔</div>
-                <h3>Smart Alerts</h3>
-                <p>Get notified when items you want become available or when you're outbid.</p>
+                <h3>Support + Alerts</h3>
+                <p>Stay on top of outbids, wins, watches, and support requests from one operational dashboard.</p>
             </div>
         </div>
     </div>
@@ -82,29 +112,30 @@
 
 <section class="categories-section">
     <div class="section-container">
-        <h2 class="section-title">Browse Categories</h2>
+        <h2 class="section-title">Browse Top-Level Families</h2>
         <div class="categories-grid">
-            <div class="category-card">
-                <div class="category-icon">💻</div>
-                <h3>Computers</h3>
-                <p>Laptops · Desktops · Components</p>
-            </div>
-            <div class="category-card">
-                <div class="category-icon">📱</div>
-                <h3>Phones</h3>
-                <p>Smartphones · Feature Phones</p>
-            </div>
-            <div class="category-card">
-                <div class="category-icon">🎧</div>
-                <h3>Audio</h3>
-                <p>Headphones · Speakers · Turntables</p>
-            </div>
-            <div class="category-card">
-                <div class="category-icon">🎮</div>
-                <h3>Gaming</h3>
-                <p>Consoles · Accessories</p>
-            </div>
+            {% for entry in category_cards %}
+                {% set category = entry.category %}
+            <a href="{{ url_for('search.browse_category', category_id=category.id) }}" class="category-card">
+                <div class="category-icon">{{ category.name[0].upper() }}</div>
+                <h3>{{ category.name }}</h3>
+                <p>{{ entry.preview }}</p>
+            </a>
+            {% endfor %}
         </div>
     </div>
 </section>
+
+{% if featured_auctions %}
+<section class="featured-auctions-section">
+    <div class="section-container">
+        <h2 class="section-title">Ending Soon</h2>
+        <div class="auctions-grid">
+            {% for auction in featured_auctions %}
+                {{ auction_card(auction) }}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
 {% endblock %}

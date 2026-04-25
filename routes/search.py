@@ -5,7 +5,7 @@ and similar-items endpoint.
 
 from datetime import datetime
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, redirect, render_template, request, url_for
 from sqlalchemy.orm import joinedload
 
 from models import db
@@ -32,57 +32,72 @@ def _root_categories():
     return Category.query.filter_by(parent_id=None).order_by(Category.name).all()
 
 
-# ── Browse ───────────────────────────────────────────────────────────────
-
-@search_bp.route('/browse')
-def browse():
-    """Category hierarchy page."""
-    categories = _root_categories()
-    return render_template('search/browse.html', categories=categories)
-
-
-@search_bp.route('/browse/<int:category_id>')
-def browse_category(category_id):
-    """Auctions in a specific category (including child categories)."""
-    category = Category.query.get_or_404(category_id)
-    cat_ids = _get_all_child_ids(category_id)
-
-    auctions = (
-        Auction.query
-        .join(Auction.item)
-        .options(joinedload(Auction.item))
-        .filter(
-            Item.category_id.in_(cat_ids),
-            Auction.status == 'active',
-            Auction.end_time > datetime.utcnow(),
-        )
-        .order_by(Auction.end_time.asc())
-        .all()
-    )
-    return render_template(
-        'search/browse.html',
-        categories=_root_categories(),
-        selected_category=category,
-        auctions=auctions,
-    )
+def _browse_params():
+    params = {
+        'q': request.args.get('q', '').strip(),
+        'min_price': request.args.get('min_price', type=float),
+        'max_price': request.args.get('max_price', type=float),
+        'condition': request.args.get('condition', '').strip(),
+        'sort': request.args.get('sort', 'ending_soon').strip(),
+    }
+    params['attribute_filters'] = {
+        key.removeprefix('attr_'): value.strip()
+        for key, value in request.args.items()
+        if key.startswith('attr_') and value.strip()
+    }
+    return params
 
 
-# ── Search ───────────────────────────────────────────────────────────────
+def _selected_category(path_category_id=None):
+    category_id = path_category_id or request.args.get('category_id', type=int)
+    if not category_id:
+        return None
+    return Category.query.get_or_404(category_id)
 
-@search_bp.route('/search')
-def search():
-    """
-    Multi-criteria search with query params:
-      ?q=keyword&category_id=5&min_price=100&max_price=500
-      &condition=new&sort=price_asc
-    """
-    q = request.args.get('q', '').strip()
-    category_id = request.args.get('category_id', type=int)
-    min_price = request.args.get('min_price', type=float)
-    max_price = request.args.get('max_price', type=float)
-    condition = request.args.get('condition', '').strip()
-    sort = request.args.get('sort', 'ending_soon').strip()
 
+def _category_attribute_fields(category):
+    if not category:
+        return []
+
+    fields = set(category.required_fields or [])
+    for child in category.children.order_by(Category.name).all():
+        fields.update(_category_attribute_fields(child))
+    return sorted(fields)
+
+
+def _leaf_descendants(category):
+    if not category.children.count():
+        return [category]
+
+    leaves = []
+    for child in category.children.order_by(Category.name).all():
+        leaves.extend(_leaf_descendants(child))
+    return leaves
+
+
+def _root_category_id(category):
+    if not category:
+        return None
+    current = category
+    while current.parent_id is not None:
+        current = current.parent
+    return current.id
+
+
+def _browse_category_children():
+    children = {}
+    for root_category in _root_categories():
+        unique_children = {}
+        for leaf_category in _leaf_descendants(root_category):
+            unique_children.setdefault(leaf_category.name, leaf_category)
+        children[root_category.id] = [
+            unique_children[name]
+            for name in sorted(unique_children.keys())
+        ]
+    return children
+
+
+def _browse_query(selected_category, q, min_price, max_price, condition, sort, attribute_filters):
     query = (
         Auction.query
         .join(Auction.item)
@@ -93,7 +108,10 @@ def search():
         )
     )
 
-    # ── Keyword ─────────────────────────────────────────────────────
+    if selected_category:
+        cat_ids = _get_all_child_ids(selected_category.id)
+        query = query.filter(Item.category_id.in_(cat_ids))
+
     if q:
         pattern = f'%{q}%'
         query = query.filter(
@@ -103,44 +121,82 @@ def search():
             )
         )
 
-    # ── Category (include children) ─────────────────────────────────
-    if category_id:
-        cat_ids = _get_all_child_ids(category_id)
-        query = query.filter(Item.category_id.in_(cat_ids))
-
-    # ── Price range ─────────────────────────────────────────────────
     if min_price is not None:
         query = query.filter(Auction.current_price >= min_price)
     if max_price is not None:
         query = query.filter(Auction.current_price <= max_price)
 
-    # ── Condition ───────────────────────────────────────────────────
     if condition:
         query = query.filter(Item.condition == condition)
 
-    # ── Sort ────────────────────────────────────────────────────────
+    for attr_name, attr_value in attribute_filters.items():
+        query = query.filter(
+            Item.attributes.any(
+                db.and_(
+                    ItemAttribute.attr_name == attr_name,
+                    ItemAttribute.attr_value.ilike(f'%{attr_value}%'),
+                )
+            )
+        )
+
     sort_map = {
-        'price_asc':    Auction.current_price.asc(),
-        'price_desc':   Auction.current_price.desc(),
-        'ending_soon':  Auction.end_time.asc(),
-        'newest':       Auction.created_at.desc(),
+        'price_asc': Auction.current_price.asc(),
+        'price_desc': Auction.current_price.desc(),
+        'ending_soon': Auction.end_time.asc(),
+        'newest': Auction.created_at.desc(),
     }
-    query = query.order_by(sort_map.get(sort, Auction.end_time.asc()))
+    return query.order_by(sort_map.get(sort, Auction.end_time.asc()))
 
-    auctions = query.all()
-    categories = _root_categories()
 
-    return render_template(
-        'search/results.html',
-        auctions=auctions,
-        categories=categories,
-        q=q,
-        category_id=category_id,
-        min_price=min_price,
-        max_price=max_price,
-        condition=condition,
-        sort=sort,
+def _render_browse(path_category_id=None):
+    params = _browse_params()
+    selected_category = _selected_category(path_category_id)
+    auctions = _browse_query(selected_category=selected_category, **params).all()
+    attribute_fields = _category_attribute_fields(selected_category)
+    selected_root_id = _root_category_id(selected_category)
+    has_active_filters = any(
+        [
+            bool(params['q']),
+            params['min_price'] is not None,
+            params['max_price'] is not None,
+            bool(params['condition']),
+            params['sort'] != 'ending_soon',
+            bool(params['attribute_filters']),
+        ]
     )
+    return render_template(
+        'search/browse.html',
+        categories=_root_categories(),
+        category_children=_browse_category_children(),
+        selected_category=selected_category,
+        selected_root_id=selected_root_id,
+        auctions=auctions,
+        has_active_filters=has_active_filters,
+        available_attribute_fields=attribute_fields,
+        **params,
+    )
+
+
+# ── Browse ───────────────────────────────────────────────────────────────
+
+@search_bp.route('/browse')
+def browse():
+    """Unified browse page with category browsing and advanced filters."""
+    return _render_browse()
+
+
+@search_bp.route('/browse/<int:category_id>')
+def browse_category(category_id):
+    """Auctions in a specific category (including child categories)."""
+    return _render_browse(category_id)
+
+
+# ── Search ───────────────────────────────────────────────────────────────
+
+@search_bp.route('/search')
+def search():
+    """Legacy item-search URL now redirects into the unified browse page."""
+    return redirect(url_for('search.browse', **request.args.to_dict(flat=True)))
 
 
 # ── Similar items ────────────────────────────────────────────────────────

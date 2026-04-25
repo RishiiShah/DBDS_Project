@@ -1,9 +1,12 @@
+import os
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
+from uuid import uuid4
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from sqlalchemy.orm import joinedload
+from werkzeug.utils import secure_filename
 
 from models import db
 from models.auction import Auction, AutoBid, Bid
@@ -11,6 +14,7 @@ from models.item import Category, Item, ItemAttribute
 from utils.bidding import close_expired_auctions, process_new_bid, trigger_autobid_on_register
 
 auction_bp = Blueprint('auction', __name__)
+ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
 
 
 def _parse_decimal(raw_value: str, field_name: str):
@@ -21,6 +25,31 @@ def _parse_decimal(raw_value: str, field_name: str):
         return value
     except (InvalidOperation, ValueError):
         raise ValueError(f'{field_name} must be a positive number.')
+
+
+def _validate_image_upload(file_storage):
+    if not file_storage or not file_storage.filename:
+        return None
+
+    filename = secure_filename(file_storage.filename)
+    _, extension = os.path.splitext(filename)
+    extension = extension.lower().lstrip('.')
+    if not extension or extension not in ALLOWED_IMAGE_EXTENSIONS:
+        raise ValueError('Image must be a JPG, PNG, GIF, or WebP file.')
+    return extension
+
+
+def _save_item_image(file_storage, item_id):
+    extension = _validate_image_upload(file_storage)
+    if not extension:
+        return None
+
+    upload_dir = current_app.config['ITEM_UPLOAD_DIR']
+    os.makedirs(upload_dir, exist_ok=True)
+
+    filename = f'item-{item_id}-{uuid4().hex[:10]}.{extension}'
+    file_storage.save(os.path.join(upload_dir, filename))
+    return filename
 
 
 def _leaf_categories():
@@ -51,27 +80,10 @@ def _leaf_categories_with_root():
 
 @auction_bp.route('/auctions')
 def list_auctions():
-    close_expired_auctions()
     category_id = request.args.get('category', type=int)
-
-    query = (
-        Auction.query.options(joinedload(Auction.item))
-        .filter_by(status='active')
-        .filter(Auction.end_time > datetime.utcnow())
-        .order_by(Auction.end_time.asc())
-    )
-
     if category_id:
-        query = query.join(Auction.item).filter(Item.category_id == category_id)
-
-    auctions = query.all()
-    categories = _leaf_categories()
-    return render_template(
-        'auction/list.html',
-        auctions=auctions,
-        categories=categories,
-        selected_category=category_id,
-    )
+        return redirect(url_for('search.browse', category_id=category_id))
+    return redirect(url_for('search.browse'))
 
 
 @auction_bp.route('/auction/create', methods=['GET', 'POST'])
@@ -93,6 +105,7 @@ def create_auction():
     category_id = request.form.get('category_id', type=int)
     condition = request.form.get('condition', 'good')
     end_time_raw = request.form.get('end_time', '').strip()
+    image_file = request.files.get('image')
 
     if not category_id:
         flash('Please select a category.', 'error')
@@ -135,6 +148,11 @@ def create_auction():
         if field_value:
             item_attributes.append((field_name, field_value))
 
+    try:
+        _validate_image_upload(image_file)
+    except ValueError as exc:
+        errors.append(str(exc))
+
     if errors:
         for error in errors:
             flash(error, 'error')
@@ -157,6 +175,27 @@ def create_auction():
 
     for attr_name, attr_value in item_attributes:
         db.session.add(ItemAttribute(item_id=item.id, attr_name=attr_name, attr_value=attr_value))
+
+    if image_file and image_file.filename:
+        try:
+            image_filename = _save_item_image(image_file, item.id)
+        except (OSError, ValueError):
+            db.session.rollback()
+            flash('Unable to save the image for this auction.', 'error')
+            return render_template(
+                'auction/create.html',
+                root_categories=root_categories,
+                leaf_categories=leaf_categories,
+                selected_category=category_id,
+            )
+
+        db.session.add(
+            ItemAttribute(
+                item_id=item.id,
+                attr_name=Item.IMAGE_ATTRIBUTE_NAME,
+                attr_value=image_filename,
+            )
+        )
 
     auction = Auction(
         item_id=item.id,

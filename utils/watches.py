@@ -16,6 +16,7 @@ def check_wishlist(new_auction):
       - keyword found in item.name or item.description
       - category matches (if specified in watch)
       - price in range (if specified)
+      - attribute filters match (if specified)
     Then create Alert('item_available') for that user.
     """
     if not new_auction or not new_auction.item:
@@ -46,6 +47,20 @@ def check_wishlist(new_auction):
         if watch.min_price is not None and starting_price < float(watch.min_price):
             continue
         if watch.max_price is not None and starting_price > float(watch.max_price):
+            continue
+
+        # ── Attribute matching (if specified) ────────────────────────
+        watch_attributes = watch.attributes or {}
+        attribute_mismatch = False
+        for attr_name, expected_value in watch_attributes.items():
+            actual_value = item.get_attribute(attr_name)
+            if not actual_value:
+                attribute_mismatch = True
+                break
+            if expected_value.lower() not in actual_value.lower():
+                attribute_mismatch = True
+                break
+        if attribute_mismatch:
             continue
 
         # ── All criteria matched — create alert ─────────────────────

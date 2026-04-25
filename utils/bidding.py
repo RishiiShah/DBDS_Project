@@ -23,10 +23,40 @@ def _create_alert(user_id: int, alert_type: str, message: str, auction_id: int |
     )
 
 
+def _participant_bidder_ids(auction_id: int, excluded_ids: set[int] | None = None) -> list[int]:
+    excluded_ids = excluded_ids or set()
+    bidder_ids = (
+        db.session.query(Bid.bidder_id)
+        .filter(Bid.auction_id == auction_id)
+        .distinct()
+        .all()
+    )
+    return [
+        bidder_id
+        for (bidder_id,) in bidder_ids
+        if bidder_id not in excluded_ids
+    ]
+
+
+def _alert_other_buyers_of_manual_bid(auction_id: int, bidder_id: int, excluded_ids: set[int] | None = None) -> None:
+    recipients = _participant_bidder_ids(
+        auction_id,
+        excluded_ids={bidder_id, *(excluded_ids or set())},
+    )
+    for recipient_id in recipients:
+        _create_alert(
+            user_id=recipient_id,
+            alert_type='custom',
+            message=f'A higher manual bid has been placed on auction #{auction_id}.',
+            auction_id=auction_id,
+        )
+
+
 def process_new_bid(auction, bid_amount, bidder_id: int):
     """Save a manual bid and resolve auto-bid competition."""
     increment = _to_decimal(auction.bid_increment)
     bid_amount = _to_decimal(bid_amount)
+    previous_winner_id = auction.current_winner_id
 
     manual_bid = Bid(
         auction_id=auction.id,
@@ -59,13 +89,18 @@ def process_new_bid(auction, bid_amount, bidder_id: int):
             )
 
     if not contenders:
-        if auction.current_winner_id and auction.current_winner_id != bidder_id:
+        if previous_winner_id and previous_winner_id != bidder_id:
             _create_alert(
-                user_id=auction.current_winner_id,
+                user_id=previous_winner_id,
                 alert_type='outbid',
                 message=f'You were outbid on auction #{auction.id}.',
                 auction_id=auction.id,
             )
+        _alert_other_buyers_of_manual_bid(
+            auction.id,
+            bidder_id,
+            excluded_ids={previous_winner_id} if previous_winner_id else set(),
+        )
         auction.current_price = bid_amount
         auction.current_winner_id = bidder_id
         db.session.commit()
@@ -92,6 +127,11 @@ def process_new_bid(auction, bid_amount, bidder_id: int):
         alert_type='outbid',
         message=f'You were outbid on auction #{auction.id}.',
         auction_id=auction.id,
+    )
+    _alert_other_buyers_of_manual_bid(
+        auction.id,
+        bidder_id,
+        excluded_ids={winner_auto_bid.bidder_id},
     )
 
     auction.current_price = winner_amount

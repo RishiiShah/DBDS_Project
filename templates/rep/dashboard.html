@@ -2,51 +2,47 @@
 {% block title %}Rep Dashboard{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width:900px;margin:2rem auto;padding:0 1rem;">
+<section class="page-section">
+  <div class="page-container">
 
-  <div style="margin-bottom:2rem;">
-    <h1 style="font-size:1.8rem;font-weight:700;">Customer Rep Dashboard</h1>
-    <p style="color:var(--text-muted);">Manage users, auctions, and customer questions.</p>
-  </div>
-
-  <!-- Stats -->
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:2rem;">
-    <div class="card" style="padding:1.25rem;text-align:center;">
-      <div style="font-size:2rem;font-weight:700;color:{% if open_questions > 0 %}#f87171{% else %}var(--primary){% endif %};">{{ open_questions }}</div>
-      <div style="color:var(--text-muted);font-size:.875rem;">Open Questions</div>
+    <div class="page-header">
+      <h1>Rep Dashboard</h1>
+      <p>Manage users, auctions, and customer questions.</p>
     </div>
-    <div class="card" style="padding:1.25rem;text-align:center;">
-      <div style="font-size:2rem;font-weight:700;color:var(--primary);">{{ total_users }}</div>
-      <div style="color:var(--text-muted);font-size:.875rem;">Active Users</div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card-value {% if open_questions > 0 %}alert-value{% endif %}">{{ open_questions }}</div>
+        <div class="stat-card-label">Open Questions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-value">{{ total_users }}</div>
+        <div class="stat-card-label">Active Users</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-value">{{ active_auctions }}</div>
+        <div class="stat-card-label">Active Auctions</div>
+      </div>
     </div>
-    <div class="card" style="padding:1.25rem;text-align:center;">
-      <div style="font-size:2rem;font-weight:700;color:var(--primary);">{{ active_auctions }}</div>
-      <div style="color:var(--text-muted);font-size:.875rem;">Active Auctions</div>
+
+    <div class="quick-actions-grid">
+      <a href="{{ url_for('rep.users') }}" class="quick-action-card">
+        <div class="quick-action-icon">👤</div>
+        <div class="quick-action-title">Manage Users</div>
+        <div class="quick-action-desc">Edit info, reset passwords, deactivate accounts.</div>
+      </a>
+      <a href="{{ url_for('rep.auctions') }}" class="quick-action-card">
+        <div class="quick-action-icon">🔨</div>
+        <div class="quick-action-title">Manage Auctions</div>
+        <div class="quick-action-desc">Remove illegal auctions or individual bids.</div>
+      </a>
+      <a href="{{ url_for('support.questions') }}" class="quick-action-card">
+        <div class="quick-action-icon">💬</div>
+        <div class="quick-action-title">Answer Questions</div>
+        <div class="quick-action-desc">{{ open_questions }} open question{{ 's' if open_questions != 1 else '' }} waiting.</div>
+      </a>
     </div>
-  </div>
-
-  <!-- Actions -->
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;">
-
-    <a href="{{ url_for('rep.users') }}" class="card" style="padding:1.5rem;text-decoration:none;display:block;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
-      <div style="font-size:1.5rem;margin-bottom:.5rem;">👤</div>
-      <div style="font-weight:600;margin-bottom:.25rem;">Manage Users</div>
-      <div style="color:var(--text-muted);font-size:.875rem;">Edit info, reset passwords, deactivate accounts.</div>
-    </a>
-
-    <a href="{{ url_for('rep.auctions') }}" class="card" style="padding:1.5rem;text-decoration:none;display:block;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
-      <div style="font-size:1.5rem;margin-bottom:.5rem;">🔨</div>
-      <div style="font-weight:600;margin-bottom:.25rem;">Manage Auctions</div>
-      <div style="color:var(--text-muted);font-size:.875rem;">Remove illegal auctions or individual bids.</div>
-    </a>
-
-    <a href="{{ url_for('support.questions') }}" class="card" style="padding:1.5rem;text-decoration:none;display:block;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
-      <div style="font-size:1.5rem;margin-bottom:.5rem;">💬</div>
-      <div style="font-weight:600;margin-bottom:.25rem;">Answer Questions</div>
-      <div style="color:var(--text-muted);font-size:.875rem;">{{ open_questions }} open question{{ 's' if open_questions != 1 else '' }} waiting.</div>
-    </a>
 
   </div>
-
-</div>
+</section>
 {% endblock %}

@@ -1,83 +1,120 @@
 {% extends 'base.html' %}
+{% from "components/auction_card.html" import auction_card %}
 
 {% block title %}Auction #{{ auction.id }}{% endblock %}
 
 {% block content %}
-<section class="dashboard-section">
-  <div class="section-container">
-    <div class="dashboard-header">
+<section class="page-section">
+  <div class="page-container wide">
+    <div class="page-header">
       <h1>{{ auction.item.name }}</h1>
-      <p class="dashboard-subtitle">{{ auction.item.category.name }} · Seller: {{ auction.seller.username }}</p>
+      <p>{{ auction.item.category.name }} · Seller: {{ auction.seller.username }}</p>
     </div>
 
-    <div class="dashboard-grid" style="grid-template-columns: 1.2fr 0.8fr;">
-      <article class="dash-card" style="align-items: stretch;">
-        <div class="dash-card-content" style="width: 100%;">
-          <h3>Item Details</h3>
-          <p class="dash-meta">{{ auction.item.description or 'No description provided.' }}</p>
-          <p class="dash-meta" style="margin-top: 8px;">Condition: {{ auction.item.condition.replace('_', ' ')|title }}</p>
-          <div style="margin-top: 12px;">
-            {% for attr in auction.item.attributes %}
-              <p class="dash-meta">{{ attr.attr_name.replace('_', ' ')|title }}: {{ attr.attr_value }}</p>
+    <div class="detail-grid">
+      <div class="detail-col-main">
+        <article class="panel-card">
+          <h2>Item Details</h2>
+          {% if auction.item.image_path %}
+            <div class="detail-image-frame">
+              <img src="{{ url_for('static', filename=auction.item.image_path) }}" alt="{{ auction.item.name }}" class="detail-image">
+            </div>
+          {% endif %}
+          <p class="quick-action-desc">{{ auction.item.description or 'No description provided.' }}</p>
+          <div class="detail-attribute-grid">
+            <div class="detail-attribute">
+              <span class="detail-attribute-label">Condition</span>
+              <strong>{{ auction.item.condition.replace('_', ' ')|title }}</strong>
+            </div>
+            <div class="detail-attribute">
+              <span class="detail-attribute-label">Seller</span>
+              <strong>{{ auction.seller.username }}</strong>
+            </div>
+            <div class="detail-attribute">
+              <span class="detail-attribute-label">Category</span>
+              <strong>{{ auction.item.category.name }}</strong>
+            </div>
+            <div class="detail-attribute">
+              <span class="detail-attribute-label">Auction ID</span>
+              <strong>#{{ auction.id }}</strong>
+            </div>
+            {% for attr in auction.item.display_attributes %}
+            <div class="detail-attribute">
+              <span class="detail-attribute-label">{{ attr.attr_name.replace('_', ' ')|title }}</span>
+              <strong>{{ attr.attr_value }}</strong>
+            </div>
             {% endfor %}
-          </div>
-        </div>
-      </article>
-
-      <article class="dash-card" style="align-items: stretch;">
-        <div class="dash-card-content" style="width: 100%;">
-          <h3>Current Price</h3>
-          <p class="dash-stat-value" id="current-price">${{ '%.2f'|format(auction.current_price|float) }}</p>
-          <p class="dash-meta">Min bid: ${{ '%.2f'|format(auction.minimum_bid) }}</p>
-          <p class="dash-meta">
-            Time left:
-            <strong class="countdown" data-end-time="{{ auction.end_time.isoformat() }}Z">--:--:--</strong>
-          </p>
-          <p class="dash-meta">Status: {{ auction.status|title }}</p>
-        </div>
-      </article>
-    </div>
-
-    {% if auction.is_active and current_user.is_authenticated and current_user.id != auction.seller_id %}
-      <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
-        <article class="dash-card">
-          <div class="dash-card-content" style="width: 100%;">
-            <h3>Place Manual Bid</h3>
-            <form method="post" action="{{ url_for('auction.place_bid', id=auction.id) }}" class="auth-form">
-              <div class="form-group">
-                <label class="form-label" for="amount">Bid amount ($)</label>
-                <input class="form-input" id="amount" name="amount" type="number" step="0.01"
-                       min="{{ '%.2f'|format(auction.minimum_bid) }}" required>
-              </div>
-              <button class="btn btn-primary btn-full" type="submit">Place Bid</button>
-            </form>
           </div>
         </article>
 
-        <article class="dash-card">
-          <div class="dash-card-content" style="width: 100%;">
-            <h3>Auto-Bid</h3>
+        <article class="table-card">
+          <div class="table-card-header">
+            <h2>Bid History</h2>
+          </div>
+          <div class="table-wrapper">
+            <table class="table bid-history-table" id="bid-history-table" data-history-url="{{ url_for('auction.bid_history', id=auction.id) }}">
+              <thead>
+                <tr>
+                  <th>Bidder</th>
+                  <th>Type</th>
+                  <th>Amount</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody id="bid-history-body">
+                {% for bid in bids %}
+                  <tr>
+                    <td>{{ bid.bidder.username }}</td>
+                    <td>
+                      <span class="role-badge {% if bid.is_auto %}role-admin{% else %}role-user{% endif %}">
+                        {{ 'Auto' if bid.is_auto else 'Manual' }}
+                      </span>
+                    </td>
+                    <td class="table-strong">${{ '%.2f'|format(bid.amount|float) }}</td>
+                    <td class="table-muted">{{ bid.created_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}</td>
+                  </tr>
+                {% else %}
+                  <tr><td colspan="4" class="table-muted">No bids yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+
+      <div class="detail-col-side">
+        <article class="panel-card">
+          <h2>Current Price</h2>
+          <p class="stat-card-value" id="current-price">${{ '%.2f'|format(auction.current_price|float) }}</p>
+          <p class="quick-action-desc">Min bid: ${{ '%.2f'|format(auction.minimum_bid) }}</p>
+          <p class="quick-action-desc">Time left: <strong class="countdown" data-end-time="{{ auction.end_time.isoformat() }}Z">--:--:--</strong></p>
+          <p class="quick-action-desc">Status: {{ auction.status|title }}</p>
+        </article>
+
+        {% if auction.is_active and current_user.is_authenticated and current_user.id != auction.seller_id %}
+          <article class="table-card bid-form-card">
+            <h2>Place Manual Bid</h2>
+            <form method="post" action="{{ url_for('auction.place_bid', id=auction.id) }}" class="auth-form">
+              <div class="form-group">
+                <label class="form-label" for="amount">Bid amount ($)</label>
+                <input class="form-input" id="amount" name="amount" type="number" step="0.01" min="{{ '%.2f'|format(auction.minimum_bid) }}" required>
+              </div>
+              <button class="btn btn-primary btn-full" type="submit">Place Bid</button>
+            </form>
+          </article>
+
+          <article class="table-card bid-form-card">
+            <h2>Auto-Bid</h2>
 
             {% if user_auto_bid %}
-              <div style="background:var(--primary-alpha);border:1px solid var(--primary);border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;">
-                <p class="dash-meta" style="margin:0 0 .25rem;">
-                  <strong>Status:</strong>
-                  {% if user_auto_bid.is_active %}
-                    <span style="color:var(--primary);">Active</span>
-                  {% else %}
-                    <span style="color:var(--text-muted);">Inactive</span>
-                  {% endif %}
-                </p>
-                <p class="dash-meta" style="margin:0;">
-                  <strong>Your limit:</strong> ${{ '%.2f'|format(user_auto_bid.upper_limit|float) }}
-                </p>
+              <div class="autobid-status {% if user_auto_bid.is_active %}autobid-status-active{% else %}autobid-status-inactive{% endif %}">
+                <p class="quick-action-desc"><strong>Status:</strong> {% if user_auto_bid.is_active %}Active{% else %}Inactive{% endif %}</p>
+                <p class="quick-action-desc"><strong>Your limit:</strong> ${{ '%.2f'|format(user_auto_bid.upper_limit|float) }}</p>
               </div>
 
               {% if user_auto_bid.is_active %}
-                <form method="post" action="{{ url_for('auction.cancel_autobid', id=auction.id) }}" style="margin-bottom:.75rem;">
-                  <button class="btn btn-outline btn-full" type="submit"
-                          style="border-color:#e05252;color:#e05252;"
-                          onclick="return confirm('Cancel your auto-bid?')">Cancel Auto-Bid</button>
+                <form method="post" action="{{ url_for('auction.cancel_autobid', id=auction.id) }}" class="auth-form">
+                  <button class="btn btn-danger btn-full" type="submit" onclick="return confirm('Cancel your auto-bid?')">Cancel Auto-Bid</button>
                 </form>
               {% endif %}
             {% endif %}
@@ -87,95 +124,27 @@
                 <label class="form-label" for="upper_limit">
                   {{ 'Update limit ($)' if user_auto_bid and user_auto_bid.is_active else 'Upper limit ($)' }}
                 </label>
-                <input class="form-input" id="upper_limit" name="upper_limit" type="number" step="0.01"
-                       min="{{ '%.2f'|format(auction.minimum_bid) }}"
-                       {% if user_auto_bid and user_auto_bid.is_active %}
-                         value="{{ '%.2f'|format(user_auto_bid.upper_limit|float) }}"
-                       {% endif %}
-                       required>
+                <input class="form-input" id="upper_limit" name="upper_limit" type="number" step="0.01" min="{{ '%.2f'|format(auction.minimum_bid) }}" {% if user_auto_bid and user_auto_bid.is_active %}value="{{ '%.2f'|format(user_auto_bid.upper_limit|float) }}"{% endif %} required>
               </div>
               <button class="btn btn-outline btn-full" type="submit">
                 {{ 'Update Auto-Bid' if user_auto_bid and user_auto_bid.is_active else 'Set Auto-Bid' }}
               </button>
             </form>
-          </div>
-        </article>
-      </div>
-    {% endif %}
-
-    <article class="dash-card" style="margin-top: 18px;">
-      <div class="dash-card-content" style="width: 100%;">
-        <h3>Bid History</h3>
-        <div style="overflow-x: auto;">
-          <table style="width: 100%; border-collapse: collapse;" id="bid-history-table"
-                 data-history-url="{{ url_for('auction.bid_history', id=auction.id) }}">
-            <thead>
-              <tr>
-                <th style="text-align: left; padding: 8px;">Bidder</th>
-                <th style="text-align: left; padding: 8px;">Type</th>
-                <th style="text-align: left; padding: 8px;">Amount</th>
-                <th style="text-align: left; padding: 8px;">Time</th>
-              </tr>
-            </thead>
-            <tbody id="bid-history-body">
-              {% for bid in bids %}
-                <tr>
-                  <td style="padding: 8px;">{{ bid.bidder.username }}</td>
-                  <td style="padding: 8px;">
-                    <span class="role-badge {% if bid.is_auto %}role-admin{% else %}role-user{% endif %}">
-                      {{ 'Auto' if bid.is_auto else 'Manual' }}
-                    </span>
-                  </td>
-                  <td style="padding: 8px;">${{ '%.2f'|format(bid.amount|float) }}</td>
-                  <td style="padding: 8px;">{{ bid.created_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}</td>
-                </tr>
-              {% else %}
-                <tr><td colspan="4" style="padding: 8px;">No bids yet.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </article>
-
-    {# ── Similar auctions ─────────────────────────────────────── #}
-    {% if similar %}
-    <div style="margin-top: 2rem;">
-      <h2 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem;">Similar Auctions</h2>
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem;">
-        {% for s in similar %}
-        <article class="dash-card" style="margin: 0;">
-          <div class="dash-card-content" style="width: 100%;">
-            <div style="display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: .5rem;">
-              <span style="font-size: .7rem; padding: .15rem .45rem; border-radius: 6px; background: var(--primary-alpha); color: var(--primary);">
-                {{ s.item.condition | replace('_', ' ') | title }}
-              </span>
-              {% if s.item.category %}
-              <span style="font-size: .7rem; padding: .15rem .45rem; border-radius: 6px; background: var(--border); color: var(--text-muted);">
-                {{ s.item.category.name }}
-              </span>
-              {% endif %}
-            </div>
-            <h3 style="font-size: .95rem; margin: 0 0 .4rem;">
-              <a href="{{ url_for('auction.auction_detail', id=s.id) }}"
-                 style="color: var(--text); text-decoration: none;">{{ s.item.name }}</a>
-            </h3>
-            <p class="dash-meta" style="margin-bottom: .5rem;">
-              {{ s.item.description[:80] if s.item.description else 'No description.' }}{% if s.item.description and s.item.description|length > 80 %}…{% endif %}
-            </p>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: .75rem;">
-              <span style="font-weight: 700; color: var(--primary);">${{ '%.2f'|format(s.current_price|float) }}</span>
-              <span class="dash-meta">{{ s.bid_count }} bid{{ 's' if s.bid_count != 1 else '' }}</span>
-            </div>
-            <a href="{{ url_for('auction.auction_detail', id=s.id) }}"
-               class="btn btn-primary btn-sm btn-full">View Auction</a>
-          </div>
-        </article>
-        {% endfor %}
+          </article>
+        {% endif %}
       </div>
     </div>
-    {% endif %}
 
+    {% if similar %}
+      <section class="similar-section">
+        <h2 class="section-title">Similar Auctions</h2>
+        <div class="similar-grid">
+          {% for s in similar %}
+            {{ auction_card(s) }}
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
   </div>
 </section>
 {% endblock %}

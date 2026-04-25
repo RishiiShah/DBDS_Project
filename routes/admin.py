@@ -24,7 +24,6 @@ def dashboard():
 @admin_bp.route('/reports')
 @role_required('admin')
 def reports():
-    from decimal import Decimal
     from sqlalchemy import func
     from models.auction import Transaction, Auction
     from models.item import Item, Category
@@ -37,23 +36,32 @@ def reports():
     ).first()
     total_sales, total_revenue, total_commission = totals
 
-    # ── Per item (top 10 by final price) ─────────────────────────
+    # ── Earnings per item ────────────────────────────────────────
     per_item = (
-        db.session.query(Item.name, Transaction.final_price, Transaction.commission)
+        db.session.query(
+            Item.name,
+            func.count(Transaction.id).label('sales'),
+            func.sum(Transaction.final_price).label('revenue'),
+            func.sum(Transaction.commission).label('commission'),
+        )
+        .select_from(Transaction)
         .join(Auction, Auction.id == Transaction.auction_id)
         .join(Item, Item.id == Auction.item_id)
-        .order_by(Transaction.final_price.desc())
+        .group_by(Item.id, Item.name)
+        .order_by(func.sum(Transaction.final_price).desc())
         .limit(10)
         .all()
     )
 
-    # ── Per category ─────────────────────────────────────────────
-    per_category = (
+    # ── Earnings per item type ───────────────────────────────────
+    per_item_type = (
         db.session.query(
             Category.name,
             func.count(Transaction.id).label('sales'),
             func.sum(Transaction.final_price).label('revenue'),
+            func.sum(Transaction.commission).label('commission'),
         )
+        .select_from(Transaction)
         .join(Auction, Auction.id == Transaction.auction_id)
         .join(Item, Item.id == Auction.item_id)
         .join(Category, Category.id == Item.category_id)
@@ -62,20 +70,41 @@ def reports():
         .all()
     )
 
-    # ── Per seller (top earners) ──────────────────────────────────
+    # ── Earnings per end-user (seller revenue) ───────────────────
     from models.user import User
-    per_seller = (
+    per_end_user = (
         db.session.query(
             User.username,
             func.count(Transaction.id).label('sales'),
             func.sum(Transaction.final_price).label('revenue'),
+            func.sum(Transaction.commission).label('commission'),
         )
+        .select_from(Transaction)
         .join(User, User.id == Transaction.seller_id)
         .group_by(User.id, User.username)
         .order_by(func.sum(Transaction.final_price).desc())
         .limit(10)
         .all()
     )
+
+    # ── Best-selling items ───────────────────────────────────────
+    best_selling_items = (
+        db.session.query(
+            Item.name,
+            func.count(Transaction.id).label('sales'),
+            func.sum(Transaction.final_price).label('revenue'),
+        )
+        .select_from(Transaction)
+        .join(Auction, Auction.id == Transaction.auction_id)
+        .join(Item, Item.id == Auction.item_id)
+        .group_by(Item.id, Item.name)
+        .order_by(func.count(Transaction.id).desc(), func.sum(Transaction.final_price).desc())
+        .limit(10)
+        .all()
+    )
+
+    # ── Best end-users (sellers by revenue) ──────────────────────
+    best_end_users = per_end_user
 
     # ── Best buyers (most spent) ──────────────────────────────────
     per_buyer = (
@@ -84,6 +113,7 @@ def reports():
             func.count(Transaction.id).label('purchases'),
             func.sum(Transaction.final_price).label('spent'),
         )
+        .select_from(Transaction)
         .join(User, User.id == Transaction.buyer_id)
         .group_by(User.id, User.username)
         .order_by(func.sum(Transaction.final_price).desc())
@@ -97,8 +127,10 @@ def reports():
         total_revenue=total_revenue,
         total_commission=total_commission,
         per_item=per_item,
-        per_category=per_category,
-        per_seller=per_seller,
+        per_item_type=per_item_type,
+        per_end_user=per_end_user,
+        best_selling_items=best_selling_items,
+        best_end_users=best_end_users,
         per_buyer=per_buyer,
     )
 

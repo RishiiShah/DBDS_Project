@@ -1,12 +1,46 @@
 from flask import Blueprint, render_template
 from flask_login import login_required, current_user
+from datetime import datetime
 
 main_bp = Blueprint('main', __name__)
 
 
 @main_bp.route('/')
 def index():
-    return render_template('index.html')
+    from models.item import Category
+    from models.auction import Auction
+    from models.user import User
+
+    # Fetch top-level categories
+    categories = Category.query.filter_by(level=0).order_by(Category.name).all()
+    category_cards = []
+    for category in categories:
+        child_names = [
+            child.name for child in category.children.order_by(Category.name).limit(2).all()
+        ]
+        category_cards.append(
+            {
+                'category': category,
+                'preview': ' · '.join(child_names) if child_names else 'Curated picks',
+            }
+        )
+
+    # Fetch 8 active auctions ending soonest
+    active_auction_query = Auction.query.filter_by(status='active').filter(
+        Auction.end_time > datetime.utcnow()
+    )
+    featured_auctions = active_auction_query.order_by(
+        Auction.end_time.asc()
+    ).limit(8).all()
+
+    return render_template(
+        'index.html',
+        categories=categories,
+        category_cards=category_cards,
+        featured_auctions=featured_auctions,
+        active_auction_count=active_auction_query.count(),
+        member_count=User.query.filter_by(role='user').count(),
+    )
 
 
 @main_bp.route('/dashboard')

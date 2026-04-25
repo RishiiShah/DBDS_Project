@@ -7,6 +7,7 @@ load_dotenv()
 class Config:
     """Base configuration."""
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-fallback-key')
+    _basedir = os.path.abspath(os.path.dirname(__file__))
 
     # MySQL connection via mysql-connector-python
     MYSQL_USER = os.getenv('MYSQL_USER', 'buyme')
@@ -29,8 +30,9 @@ class Config:
         }
     else:
         # SQLite for local dev without Docker
-        _basedir = os.path.abspath(os.path.dirname(__file__))
         SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(_basedir, 'buyme.db')
         SQLALCHEMY_ENGINE_OPTIONS = {}
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    ITEM_UPLOAD_SUBDIR = os.path.join('uploads', 'items')
+    ITEM_UPLOAD_DIR = os.path.join(_basedir, 'static', ITEM_UPLOAD_SUBDIR)

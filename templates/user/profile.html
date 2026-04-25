@@ -2,67 +2,54 @@
 {% block title %}My Profile{% endblock %}
 
 {% block content %}
-<div class="container" style="padding:2rem 1rem;max-width:700px;margin:auto;">
+<section class="page-section">
+  <div class="page-container narrow">
+    <div class="page-header">
+      <h1>My Profile</h1>
+    </div>
 
-    <h1 class="page-title" style="font-size:2rem;font-weight:800;margin-bottom:1.5rem;">My Profile</h1>
+    <div class="card panel-card">
+      <div class="profile-info-row">
+        <div class="profile-avatar-lg">
+          {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+        </div>
+        <div>
+          <p class="profile-name">{{ current_user.full_name }}</p>
+          <p class="profile-sub">@{{ current_user.username }} · {{ current_user.role | title }}</p>
+          <p class="profile-sub">Member since {{ current_user.created_at.strftime('%B %Y') }}</p>
+        </div>
+      </div>
 
-    <div class="card" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:2rem;">
+      <form method="POST" action="{{ url_for('user.profile_edit') }}" class="auth-form">
+        <h3 class="profile-edit-title">Edit Profile</h3>
 
-        {# ── Avatar & info ──────────────────────────────────── #}
-        <div style="display:flex;align-items:center;gap:1.25rem;margin-bottom:2rem;">
-            <div
-                style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-hover));display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:#fff;">
-                {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
-            </div>
-            <div>
-                <h2 style="margin:0;font-size:1.25rem;font-weight:700;">{{ current_user.full_name }}</h2>
-                <p style="margin:.15rem 0 0;color:var(--text-muted);font-size:.9rem;">@{{ current_user.username }} · {{
-                    current_user.role | title }}</p>
-                <p style="margin:.15rem 0 0;color:var(--text-muted);font-size:.85rem;">Member since {{
-                    current_user.created_at.strftime('%B %Y') }}</p>
-            </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            <input type="text" name="first_name" value="{{ current_user.first_name }}" required class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            <input type="text" name="last_name" value="{{ current_user.last_name }}" required class="form-input">
+          </div>
         </div>
 
-        {# ── Edit form ──────────────────────────────────────── #}
-        <form method="POST" action="{{ url_for('user.profile_edit') }}">
-            <h3 style="font-size:1rem;font-weight:700;margin:0 0 1rem;color:var(--text);">Edit Profile</h3>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" value="{{ current_user.email }}" required class="form-input">
+        </div>
 
-            <div style="display:flex;gap:1rem;margin-bottom:1rem;">
-                <div style="flex:1;">
-                    <label style="display:block;margin-bottom:.25rem;font-size:.85rem;color:var(--text-muted);">First
-                        Name</label>
-                    <input type="text" name="first_name" value="{{ current_user.first_name }}" required
-                        style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:.9rem;">
-                </div>
-                <div style="flex:1;">
-                    <label style="display:block;margin-bottom:.25rem;font-size:.85rem;color:var(--text-muted);">Last
-                        Name</label>
-                    <input type="text" name="last_name" value="{{ current_user.last_name }}" required
-                        style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:.9rem;">
-                </div>
-            </div>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </form>
 
-            <div style="margin-bottom:1.25rem;">
-                <label
-                    style="display:block;margin-bottom:.25rem;font-size:.85rem;color:var(--text-muted);">Email</label>
-                <input type="email" name="email" value="{{ current_user.email }}" required
-                    style="width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:.9rem;">
-            </div>
-
-            <button type="submit" class="btn btn-primary">Save Changes</button>
+      <div class="danger-zone">
+        <h3>Danger Zone</h3>
+        <p>Deactivating your account is permanent. Your data will remain but you will not be able to log in.</p>
+        <form method="POST" action="{{ url_for('user.profile_delete') }}" onsubmit="return confirm('Are you sure you want to deactivate your account?');">
+          <button type="submit" class="btn btn-danger btn-sm">Deactivate Account</button>
         </form>
-
-        {# ── Danger zone ────────────────────────────────────── #}
-        <hr style="border:0;border-top:1px solid var(--border);margin:2rem 0 1.5rem;">
-        <h3 style="font-size:1rem;font-weight:700;margin:0 0 .5rem;color:#ef4444;">Danger Zone</h3>
-        <p style="color:var(--text-muted);font-size:.85rem;margin:0 0 1rem;">Deactivating your account is permanent.
-            Your data will remain but you won't be able to log in.</p>
-        <form method="POST" action="{{ url_for('user.profile_delete') }}"
-            onsubmit="return confirm('Are you sure you want to deactivate your account?');">
-            <button type="submit" class="btn"
-                style="background:#ef4444;color:#fff;border:none;padding:.5rem 1.25rem;border-radius:8px;cursor:pointer;">Deactivate
-                Account</button>
-        </form>
+      </div>
     </div>
-</div>
+  </div>
+</section>
 {% endblock %}

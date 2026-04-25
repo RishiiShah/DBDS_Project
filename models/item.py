@@ -40,6 +40,7 @@ class Item(db.Model):
     Generic fields live here; category-specific fields are in ItemAttribute.
     """
     __tablename__ = 'items'
+    IMAGE_ATTRIBUTE_NAME = '_image_filename'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
@@ -72,6 +73,23 @@ class Item(db.Model):
             if attr.attr_name == name:
                 return attr.attr_value
         return None
+
+    @property
+    def image_filename(self):
+        return self.get_attribute(self.IMAGE_ATTRIBUTE_NAME)
+
+    @property
+    def image_path(self):
+        if not self.image_filename:
+            return None
+        return f'uploads/items/{self.image_filename}'
+
+    @property
+    def display_attributes(self):
+        return [
+            attr for attr in self.attributes
+            if attr.attr_name != self.IMAGE_ATTRIBUTE_NAME
+        ]
 
     def __repr__(self):
         return f'<Item {self.name}>'

@@ -2,154 +2,133 @@
 {% block title %}Manage Auctions{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width:1000px;margin:2rem auto;padding:0 1rem;">
-
-  <div style="margin-bottom:1.5rem;">
-    <a href="{{ url_for('rep.dashboard') }}" style="color:var(--text-muted);font-size:.875rem;">← Back to Rep Dashboard</a>
-    <h1 style="font-size:1.8rem;font-weight:700;margin-top:.75rem;">Manage Auctions</h1>
-  </div>
-
-  <!-- Filters -->
-  <form method="GET" style="margin-bottom:1.5rem;display:flex;gap:.75rem;flex-wrap:wrap;">
-    <input type="text" name="q" value="{{ q }}" placeholder="Search by item name…"
-      style="flex:1;min-width:200px;padding:.6rem .75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);">
-    <select name="status"
-      style="padding:.6rem .75rem;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);">
-      <option value="active"    {% if status_filter=='active'    %}selected{% endif %}>Active</option>
-      <option value="closed"    {% if status_filter=='closed'    %}selected{% endif %}>Closed</option>
-      <option value="cancelled" {% if status_filter=='cancelled' %}selected{% endif %}>Cancelled</option>
-    </select>
-    <button type="submit" class="btn btn-primary">Filter</button>
-  </form>
-
-  <!-- Bid management panel for a specific auction -->
-  {% if selected_auction %}
-  <div class="card" style="padding:1.5rem;margin-bottom:1.5rem;border-color:var(--primary);">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-      <h2 style="font-size:1.1rem;font-weight:600;">
-        Bids on: {{ selected_auction.item.name }}
-        <span style="color:var(--text-muted);font-weight:400;font-size:.9rem;">(Auction #{{ selected_auction.id }})</span>
-      </h2>
-      <a href="{{ url_for('rep.auctions') }}" style="color:var(--text-muted);font-size:.875rem;">✕ Close</a>
+<section class="page-section">
+  <div class="page-container wide">
+    <div class="page-header">
+      <a href="{{ url_for('rep.dashboard') }}" class="back-link">← Back to Rep Dashboard</a>
+      <h1>Manage Auctions</h1>
     </div>
 
-    {% if bids %}
-    <table style="width:100%;border-collapse:collapse;">
-      <thead>
-        <tr style="text-align:left;border-bottom:1px solid var(--border);">
-          <th style="padding:.5rem .75rem;color:var(--text-muted);font-weight:500;">Bidder</th>
-          <th style="padding:.5rem .75rem;color:var(--text-muted);font-weight:500;">Amount</th>
-          <th style="padding:.5rem .75rem;color:var(--text-muted);font-weight:500;">Type</th>
-          <th style="padding:.5rem .75rem;color:var(--text-muted);font-weight:500;">Time</th>
-          <th style="padding:.5rem .75rem;color:var(--text-muted);font-weight:500;">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for bid in bids %}
-        <tr style="border-bottom:1px solid var(--border-subtle);">
-          <td style="padding:.6rem .75rem;font-weight:500;">{{ bid.bidder.username }}</td>
-          <td style="padding:.6rem .75rem;">${{ '%.2f' % bid.amount }}</td>
-          <td style="padding:.6rem .75rem;color:var(--text-muted);font-size:.85rem;">
-            {{ 'Auto' if bid.is_auto else 'Manual' }}
-          </td>
-          <td style="padding:.6rem .75rem;color:var(--text-muted);font-size:.85rem;">
-            {{ bid.created_at.strftime('%b %d, %H:%M') }}
-          </td>
-          <td style="padding:.6rem .75rem;">
-            <form method="POST" action="{{ url_for('rep.remove_bid', bid_id=bid.id) }}"
-              onsubmit="return confirm('Remove this bid from {{ bid.bidder.username }}?')">
-              <button type="submit" class="btn btn-sm" style="background:#7f1d1d;color:#fff;border:none;">Remove</button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <form method="GET" class="search-bar">
+      <input type="text" name="q" value="{{ q }}" placeholder="Search by item name..." class="search-input">
+      <select name="status" class="filter-select">
+        <option value="active" {% if status_filter=='active' %}selected{% endif %}>Active</option>
+        <option value="closed" {% if status_filter=='closed' %}selected{% endif %}>Closed</option>
+        <option value="cancelled" {% if status_filter=='cancelled' %}selected{% endif %}>Cancelled</option>
+      </select>
+      <button type="submit" class="btn btn-primary">Filter</button>
+    </form>
+
+    {% if selected_auction %}
+      <div class="table-card panel-card">
+        <div class="panel-actions">
+          <h2>Bids on: {{ selected_auction.item.name }} (Auction #{{ selected_auction.id }})</h2>
+          <a href="{{ url_for('rep.auctions') }}" class="back-link">✕ Close</a>
+        </div>
+
+        {% if bids %}
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Bidder</th>
+                  <th>Amount</th>
+                  <th>Type</th>
+                  <th>Time</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for bid in bids %}
+                  <tr>
+                    <td><strong>{{ bid.bidder.username }}</strong></td>
+                    <td class="table-strong">${{ '%.2f' % bid.amount }}</td>
+                    <td class="table-muted">{{ 'Auto' if bid.is_auto else 'Manual' }}</td>
+                    <td class="table-muted">{{ bid.created_at.strftime('%b %d, %H:%M') }}</td>
+                    <td>
+                      <form method="POST" action="{{ url_for('rep.remove_bid', bid_id=bid.id) }}" class="inline-form" onsubmit="return confirm('Remove this bid from {{ bid.bidder.username }}?')">
+                        <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                      </form>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="results-count">No bids on this auction.</p>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {% if auctions %}
+      <div class="table-card">
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Item</th>
+                <th>Seller</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Ends</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for auction in auctions %}
+                <tr>
+                  <td class="table-muted">{{ auction.id }}</td>
+                  <td><a href="{{ url_for('auction.auction_detail', id=auction.id) }}"><strong>{{ auction.item.name }}</strong></a></td>
+                  <td class="table-muted">{{ auction.seller.username }}</td>
+                  <td class="table-strong">${{ '%.2f' % auction.current_price }}</td>
+                  <td>
+                    {% if auction.status == 'active' %}
+                      <span class="chip chip-success">Active</span>
+                    {% elif auction.status == 'closed' %}
+                      <span class="chip chip-muted">Closed</span>
+                    {% else %}
+                      <span class="chip chip-error">{{ auction.status|capitalize }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="table-muted">{{ auction.end_time.strftime('%b %d, %H:%M') }}</td>
+                  <td>
+                    <div class="panel-actions">
+                      {% if auction.status == 'active' %}
+                        <a href="{{ url_for('rep.auction_bids', auction_id=auction.id) }}" class="btn btn-ghost btn-sm">Bids</a>
+                        <button onclick="toggleRemove({{ auction.id }})" class="btn btn-danger btn-sm" type="button">Remove</button>
+                      {% else %}
+                        <span class="table-muted">—</span>
+                      {% endif %}
+                    </div>
+
+                    <div id="remove-{{ auction.id }}" class="remove-panel hidden">
+                      <form method="POST" action="{{ url_for('rep.remove_auction', auction_id=auction.id) }}">
+                        <input type="text" name="reason" placeholder="Reason for removal (optional)" class="form-input">
+                        <div class="panel-actions">
+                          <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Remove auction #{{ auction.id }}? This cannot be undone.')">Confirm Remove</button>
+                          <button type="button" onclick="toggleRemove({{ auction.id }})" class="btn btn-ghost btn-sm">Cancel</button>
+                        </div>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
     {% else %}
-    <p style="color:var(--text-muted);">No bids on this auction.</p>
+      <div class="empty-state"><p>No auctions found.</p></div>
     {% endif %}
   </div>
-  {% endif %}
-
-  <!-- Auction list -->
-  {% if auctions %}
-  <div class="card" style="padding:0;overflow:hidden;">
-    <table style="width:100%;border-collapse:collapse;">
-      <thead>
-        <tr style="text-align:left;border-bottom:1px solid var(--border);background:var(--bg-card);">
-          <th style="padding:.75rem 1rem;color:var(--text-muted);font-weight:500;">#</th>
-          <th style="padding:.75rem 1rem;color:var(--text-muted);font-weight:500;">Item</th>
-          <th style="padding:.75rem 1rem;color:var(--text-muted);font-weight:500;">Seller</th>
-          <th style="padding:.75rem 1rem;color:var(--text-muted);font-weight:500;">Price</th>
-          <th style="padding:.75rem 1rem;color:var(--text-muted);font-weight:500;">Status</th>
-          <th style="padding:.75rem 1rem;color:var(--text-muted);font-weight:500;">Ends</th>
-          <th style="padding:.75rem 1rem;color:var(--text-muted);font-weight:500;">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for auction in auctions %}
-        <tr style="border-bottom:1px solid var(--border-subtle);">
-          <td style="padding:.75rem 1rem;color:var(--text-muted);">{{ auction.id }}</td>
-          <td style="padding:.75rem 1rem;">
-            <a href="{{ url_for('auction.auction_detail', id=auction.id) }}"
-               style="font-weight:500;color:var(--text);">{{ auction.item.name }}</a>
-          </td>
-          <td style="padding:.75rem 1rem;color:var(--text-muted);">{{ auction.seller.username }}</td>
-          <td style="padding:.75rem 1rem;">${{ '%.2f' % auction.current_price }}</td>
-          <td style="padding:.75rem 1rem;">
-            <span style="font-size:.8rem;font-weight:500;
-              color:{% if auction.status=='active' %}#4ade80{% elif auction.status=='closed' %}var(--text-muted){% else %}#f87171{% endif %};">
-              {{ auction.status|capitalize }}
-            </span>
-          </td>
-          <td style="padding:.75rem 1rem;color:var(--text-muted);font-size:.85rem;">
-            {{ auction.end_time.strftime('%b %d, %H:%M') }}
-          </td>
-          <td style="padding:.75rem 1rem;">
-            <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
-              {% if auction.status == 'active' %}
-
-              <!-- View/manage bids -->
-              <a href="{{ url_for('rep.auction_bids', auction_id=auction.id) }}"
-                 class="btn btn-ghost btn-sm">Bids</a>
-
-              <!-- Remove auction -->
-              <button onclick="toggleRemove({{ auction.id }})" class="btn btn-sm"
-                style="background:#7f1d1d;color:#fff;border:none;">Remove</button>
-              {% else %}
-              <span style="color:var(--text-muted);font-size:.85rem;">—</span>
-              {% endif %}
-            </div>
-
-            <!-- Remove auction confirm form -->
-            <div id="remove-{{ auction.id }}" style="display:none;margin-top:.75rem;padding:.75rem;background:var(--bg-input);border-radius:6px;">
-              <form method="POST" action="{{ url_for('rep.remove_auction', auction_id=auction.id) }}">
-                <input type="text" name="reason" placeholder="Reason for removal (optional)"
-                  style="width:100%;padding:.5rem;background:var(--bg-card);border:1px solid var(--border);border-radius:4px;color:var(--text);box-sizing:border-box;margin-bottom:.5rem;">
-                <button type="submit" class="btn btn-sm" style="background:#7f1d1d;color:#fff;border:none;"
-                  onclick="return confirm('Remove auction #{{ auction.id }}? This cannot be undone.')">Confirm Remove</button>
-                <button type="button" onclick="toggleRemove({{ auction.id }})" class="btn btn-ghost btn-sm">Cancel</button>
-              </form>
-            </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <div class="card" style="padding:3rem;text-align:center;color:var(--text-muted);">
-    No auctions found.
-  </div>
-  {% endif %}
-
-</div>
+</section>
 
 {% block scripts %}
 <script>
   function toggleRemove(id) {
-    const el = document.getElementById('remove-' + id);
-    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    document.getElementById('remove-' + id).classList.toggle('hidden');
   }
 </script>
 {% endblock %}

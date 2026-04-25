@@ -2,59 +2,51 @@
 {% block title %}My Questions{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width:800px;margin:2rem auto;padding:0 1rem;">
-
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
-    <div>
-      <h1 style="font-size:1.8rem;font-weight:700;">My Questions</h1>
-      <p style="color:var(--text-muted);">Your support history with BuyMe.</p>
+<section class="page-section">
+  <div class="page-container narrow">
+    <div class="page-header">
+      <h1>My Questions</h1>
+      <p>Your support history with BuyMe.</p>
     </div>
-    <div style="display:flex;gap:.75rem;">
+
+    <div class="panel-actions">
       <a href="{{ url_for('support.search') }}" class="btn btn-ghost">Search Q&amp;A</a>
       <a href="{{ url_for('support.ask') }}" class="btn btn-primary">+ Ask a Question</a>
     </div>
-  </div>
 
-  {% if questions %}
-    {% for question in questions %}
-    <div class="card" style="padding:1.5rem;margin-bottom:1rem;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;">
-        <div>
-          <div style="font-weight:600;font-size:1rem;">{{ question.subject }}</div>
-          <div style="color:var(--text-muted);font-size:.8rem;margin-top:.25rem;">
-            {{ question.created_at.strftime('%b %d, %Y at %H:%M') }}
+    {% if questions %}
+      {% for question in questions %}
+        <div class="question-card">
+          <div class="question-header">
+            <div>
+              <h3>{{ question.subject }}</h3>
+              <p class="table-muted">{{ question.created_at.strftime('%b %d, %Y at %H:%M') }}</p>
+            </div>
+            <span class="question-status {% if question.status == 'open' %}question-status-open{% elif question.status == 'answered' %}question-status-answered{% else %}question-status-closed{% endif %}">
+              {{ question.status|capitalize }}
+            </span>
           </div>
-        </div>
-        <span style="font-size:.75rem;font-weight:600;padding:.25rem .6rem;border-radius:12px;white-space:nowrap;
-          {% if question.status == 'open' %}background:#7c2d12;color:#fed7aa;
-          {% elif question.status == 'answered' %}background:#14532d;color:#bbf7d0;
-          {% else %}background:var(--bg-input);color:var(--text-muted);{% endif %}">
-          {{ question.status|capitalize }}
-        </span>
-      </div>
 
-      <p style="margin:.75rem 0 0;color:var(--text-muted);font-size:.9rem;line-height:1.5;">{{ question.body }}</p>
+          <p>{{ question.body }}</p>
 
-      {% if question.answers %}
-      <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);">
-        {% for answer in question.answers %}
-        <div style="background:var(--bg-input);border-radius:6px;padding:.75rem 1rem;margin-bottom:.5rem;">
-          <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:.4rem;">
-            Rep <strong>{{ answer.rep.username }}</strong> replied · {{ answer.created_at.strftime('%b %d, %Y at %H:%M') }}
-          </div>
-          <div style="font-size:.9rem;line-height:1.5;">{{ answer.body }}</div>
+          {% if question.answers %}
+            <div class="answer-block">
+              {% for answer in question.answers %}
+                <div class="answer-item">
+                  <div class="answer-meta">Rep <strong>{{ answer.rep.username }}</strong> replied · {{ answer.created_at.strftime('%b %d, %Y at %H:%M') }}</div>
+                  <div>{{ answer.body }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
-        {% endfor %}
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <p>You have not submitted any questions yet.</p>
+        <a href="{{ url_for('support.ask') }}" class="btn btn-primary">Ask Your First Question</a>
       </div>
-      {% endif %}
-    </div>
-    {% endfor %}
-  {% else %}
-  <div class="card" style="padding:3rem;text-align:center;">
-    <p style="color:var(--text-muted);margin-bottom:1rem;">You haven't submitted any questions yet.</p>
-    <a href="{{ url_for('support.ask') }}" class="btn btn-primary">Ask Your First Question</a>
+    {% endif %}
   </div>
-  {% endif %}
-
-</div>
+</section>
 {% endblock %}
