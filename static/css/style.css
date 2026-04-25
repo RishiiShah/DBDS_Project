@@ -129,14 +129,14 @@ textarea {
 }
 
 .nav-container {
-  max-width: 1260px;
+  max-width: 1400px;
   margin: 0 auto;
   height: 100%;
   padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: 16px;
 }
 
 .nav-logo {
@@ -182,7 +182,7 @@ textarea {
 }
 
 .nav-link {
-  padding: 10px 14px;
+  padding: 8px 11px;
   border-radius: var(--radius-full);
   color: var(--text-secondary);
   font-size: 0.92rem;
@@ -192,6 +192,16 @@ textarea {
 .nav-link:hover {
   color: var(--text-primary);
   background: rgba(111, 134, 167, 0.08);
+}
+
+/* Staff-only links (Admin Panel, Rep Panel) get a subtle tinted style */
+.nav-link-staff {
+  color: var(--accent-secondary);
+}
+
+.nav-link-staff:hover {
+  color: var(--accent-primary);
+  background: rgba(111, 134, 167, 0.1);
 }
 
 .nav-alert-btn,
@@ -2087,15 +2097,43 @@ textarea {
   }
 
   .nav-link,
-  .nav-actions .btn,
-  .nav-dropdown-trigger {
+  .nav-actions .btn {
     width: 100%;
     justify-content: flex-start;
   }
 
-  .nav-user-name,
-  .dropdown-arrow {
+  /* On mobile, collapse the dropdown into inline flat links */
+  .nav-dropdown-trigger {
     display: none;
+  }
+
+  .nav-dropdown-menu {
+    position: static;
+    display: flex !important;
+    flex-direction: column;
+    box-shadow: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 6px;
+    margin-top: 4px;
+    width: 100%;
+  }
+
+  /* Alert bell goes full-width on mobile */
+  .nav-alert-btn {
+    width: 100%;
+    height: auto;
+    padding: 10px 14px;
+    border-radius: var(--radius-full);
+    justify-content: flex-start;
+    gap: 10px;
+    font-size: 0.92rem;
+  }
+
+  .nav-alert-btn::after {
+    content: "Alerts";
+    font-weight: 600;
+    color: var(--text-secondary);
   }
 
   .hero,
