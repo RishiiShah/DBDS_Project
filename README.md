@@ -134,7 +134,7 @@ Each leaf category stores its required fields as JSON — **adding a new categor
 
 ## ER Diagram
 
-- See [docs/ER_DIAGRAM.md](docs/ER_DIAGRAM.md) for the current project ER diagram.
+- See [ER Diagram.jpeg](ER%20Diagram.jpeg) for the current project ER diagram.
 
 ---
 
