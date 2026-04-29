@@ -6,10 +6,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function formatRemaining(msLeft) {
     const totalSeconds = Math.max(0, Math.floor(msLeft / 1000));
-    const hours = Math.floor(totalSeconds / 3600);
+    const days    = Math.floor(totalSeconds / 86400);
+    const hours   = Math.floor((totalSeconds % 86400) / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    if (days > 0) return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+    return `${minutes}m ${seconds}s`;
   }
 
   if (countdownEl) {
@@ -18,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const now = new Date();
       const remaining = endTime.getTime() - now.getTime();
       if (remaining <= 0) {
-        countdownEl.textContent = '00:00:00';
+        countdownEl.textContent = 'Ended';
         return;
       }
       countdownEl.textContent = formatRemaining(remaining);
